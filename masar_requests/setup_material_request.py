@@ -34,6 +34,7 @@ def setup_material_request_all():
     create_sharing_server_script()
     create_fission_engine_server_script()
     create_material_request_workflow()
+    remove_legacy_direct_supervisor_role()
     setup_university_secretary_role()
 
     if frappe.db.exists("Client Script", "Material Request UI masar_requests"):
@@ -61,9 +62,23 @@ def create_material_workflow_prerequisites():
     AR: إنشاء الأدوار، الحالات، والإجراءات المطلوبة لسير العمل
     EN: Create roles, states, and actions required for the workflow
     """
-    # AR: إنشاء الأدوار الإدارية وأدوار تعديل الكمية/السعر
-    # EN: Create administrative roles and Qty/Financial modifier roles
-    roles = ["Direct Supervisor", "Warehouse Manager", "HR Manager", "Accounts Manager", "Secretary General", "University President", "MR Qty Modifier", "MR Financial Modifier"]
+    # AR:
+    # لا يتم إنشاء دور Direct Supervisor. المسؤول المباشر يُحدَّد حصراً من
+    # Employee.reports_to ثم يُمنح الوصول إلى الطلب المحدد عبر DocShare.
+    #
+    # EN:
+    # Do not create a Direct Supervisor role. The direct supervisor is resolved
+    # exclusively from Employee.reports_to and receives document-specific access
+    # through DocShare.
+    roles = [
+        "Warehouse Manager",
+        "HR Manager",
+        "Accounts Manager",
+        "Secretary General",
+        "University President",
+        "MR Qty Modifier",
+        "MR Financial Modifier",
+    ]
     for role in roles:
         if not frappe.db.exists("Role", role):
             frappe.get_doc({"doctype": "Role", "role_name": role}).insert(ignore_permissions=True)
@@ -81,6 +96,57 @@ def create_material_workflow_prerequisites():
     for action in actions:
         if not frappe.db.exists("Workflow Action Master", action):
             frappe.get_doc({"doctype": "Workflow Action Master", "workflow_action_name": action}).insert(ignore_permissions=True)
+
+
+
+def remove_legacy_direct_supervisor_role():
+    '''
+    AR:
+        إزالة دور Direct Supervisor القديم بعد تحديث سير العمل، مع حذف
+        إسنادات المستخدمين والصلاحيات وإجراءات Workflow القديمة المرتبطة به.
+
+    EN:
+        Remove the legacy Direct Supervisor role after updating the workflow,
+        including user assignments, permissions, and stale workflow actions.
+    '''
+    role_name = "Direct Supervisor"
+
+    # AR: إزالة السجلات القديمة التي تربط المستخدمين والصلاحيات بالدور.
+    # EN: Remove legacy user assignments, permissions, and pending action links.
+    frappe.db.delete("Has Role", {"role": role_name})
+    frappe.db.delete("Custom DocPerm", {"role": role_name})
+
+    if frappe.db.exists("DocType", "Workflow Action Permitted Role"):
+        workflow_action_names = frappe.get_all(
+            "Workflow Action Permitted Role",
+            filters={"role": role_name},
+            pluck="parent",
+        )
+        for workflow_action_name in set(workflow_action_names):
+            if frappe.db.exists("Workflow Action", workflow_action_name):
+                frappe.delete_doc(
+                    "Workflow Action",
+                    workflow_action_name,
+                    ignore_permissions=True,
+                    force=True,
+                )
+
+    if frappe.db.exists("Role", role_name):
+        # AR:
+        # لا نستخدم force هنا حتى لا نحذف الدور مع ترك مراجع غير معروفة في
+        # تخصيصات أخرى. يجب أن يفشل التحديث بوضوح إن كان الدور مستخدماً خارج
+        # هذا المسار بدلاً من إنشاء بيانات يتيمة.
+        #
+        # EN:
+        # Do not force deletion. Unknown external references should stop the
+        # migration instead of leaving orphaned links.
+        frappe.delete_doc(
+            "Role",
+            role_name,
+            ignore_permissions=True,
+        )
+
+    frappe.clear_cache()
 
 
 def create_material_request_custom_fields():
@@ -312,7 +378,6 @@ def modify_material_request_properties():
 
     cols_to_remove = [
         "description",
-        "uom",
         "stock_uom",
         "warehouse",
         "schedule_date",
@@ -340,11 +405,21 @@ def modify_material_request_properties():
         "Int",
     )
     make_property_setter(
+        "Material Request Item", "uom", "columns", "1", "Int"
+    )
+    make_property_setter(
+        "Material Request Item", "uom", "hidden", 0, "Check"
+    )
+    make_property_setter(
+        "Material Request Item", "uom", "in_list_view", 1, "Check"
+    )    
+    make_property_setter(
         "Material Request Item", "rate", "columns", "1", "Int"
     )
     make_property_setter(
         "Material Request Item", "amount", "columns", "1", "Int"
     )
+    
 
     # AR:
     # qty قابل للتعديل في ثلاث حالات فقط:
@@ -410,6 +485,8 @@ def grant_employee_base_permissions():
         "System Manager",
         "Administrator",
         "Employee",
+        # AR: مدرج للحذف فقط؛ لا يعاد إنشاؤه أو منحه صلاحيات.
+        # EN: Included for cleanup only; it is not recreated or granted permissions.
         "Direct Supervisor",
         "Warehouse Manager",
         "HR Manager",
@@ -487,7 +564,6 @@ def grant_employee_base_permissions():
     )
 
     for role in (
-        "Direct Supervisor",
         "Warehouse Manager",
         "HR Manager",
         "Accounts Manager",
@@ -516,303 +592,6 @@ def grant_employee_base_permissions():
     )
 
     frappe.clear_cache(doctype=doctype_name)
-
-
-
-# def create_sharing_server_script():
-#     '''
-#     AR:
-#         إنشاء Server Script لمشاركة طلب المواد مع أصحاب المرحلة الحالية
-#         وسكرتاريتهم بصلاحية قراءة وطباعة فقط.
-
-#         تظهر المعاملة لأي سكرتير فقط عندما يكون مسؤوله صاحب إجراء Workflow
-#         الحالي، بما في ذلك سكرتير الأمين العام وسكرتير رئيس الجامعة.
-
-#     EN:
-#         Create the Material Request sharing Server Script.
-
-#         Every secretary, including Secretary General and President
-#         secretaries, can see a request only while their principal owns the
-#         current workflow action.
-#     '''
-#     script_name = "Auto Share MR with Direct Supervisor masar_requests"
-
-#     if frappe.db.exists("Server Script", script_name):
-#         frappe.delete_doc(
-#             "Server Script",
-#             script_name,
-#             ignore_permissions=True,
-#             force=True,
-#         )
-
-#     script = frappe.new_doc("Server Script")
-#     script.name = script_name
-#     script.script_type = "DocType Event"
-#     script.reference_doctype = "Material Request"
-#     script.doctype_event = "After Save"
-
-#     script.script = r'''
-# def get_employee_user(employee):
-#     # AR: جلب حساب المستخدم المرتبط بسجل الموظف.
-#     # EN: Return the User linked to an Employee record.
-#     if not employee:
-#         return None
-
-#     return frappe.db.get_value(
-#         'Employee',
-#         employee,
-#         'user_id'
-#     )
-
-
-# def get_user_secretary(target_user):
-#     # AR: جلب حساب سكرتير مستخدم محدد من سجل الموظف.
-#     # EN: Return the secretary User linked to a specific User's Employee record.
-#     if not target_user:
-#         return None
-
-#     employee = frappe.db.get_value(
-#         'Employee',
-#         {'user_id': target_user},
-#         'name'
-#     )
-#     if not employee:
-#         return None
-
-#     secretary_employee = frappe.db.get_value(
-#         'Employee',
-#         employee,
-#         'custom_secretary_employee'
-#     )
-#     if not secretary_employee:
-#         return None
-
-#     return frappe.db.get_value(
-#         'Employee',
-#         secretary_employee,
-#         'user_id'
-#     )
-
-
-# def get_enabled_users_with_role(role):
-#     # AR: جلب المستخدمين المفعلين الذين يحملون دوراً محدداً.
-#     # EN: Return enabled users assigned to a specific role.
-#     rows = frappe.get_all(
-#         'Has Role',
-#         filters={
-#             'role': role,
-#             'parenttype': 'User'
-#         },
-#         fields=['parent']
-#     )
-
-#     users = []
-#     for row in rows:
-#         user = row.parent
-#         if user and frappe.db.get_value('User', user, 'enabled'):
-#             users.append(user)
-
-#     return users
-
-
-# def get_role_secretaries(role):
-#     # AR: جلب سكرتارية جميع المستخدمين المفعلين في دور محدد.
-#     # EN: Return secretaries of all enabled users assigned to a role.
-#     secretaries = []
-
-#     for principal_user in get_enabled_users_with_role(role):
-#         secretary_user = get_user_secretary(principal_user)
-#         if secretary_user:
-#             secretaries.append(secretary_user)
-
-#     return secretaries
-
-
-# def get_all_secretary_users():
-#     # AR: كل مستخدم تم اختياره كسكرتير في Employee.
-#     # EN: Every User selected as a secretary in Employee.
-#     secretary_employees = frappe.get_all(
-#         'Employee',
-#         filters={'custom_secretary_employee': ['is', 'set']},
-#         pluck='custom_secretary_employee'
-#     )
-
-#     users = set()
-#     for secretary_employee in secretary_employees:
-#         secretary_user = frappe.db.get_value(
-#             'Employee',
-#             secretary_employee,
-#             'user_id'
-#         )
-#         if secretary_user:
-#             users.add(secretary_user)
-
-#     return users
-
-
-# def upsert_share(target_user, can_write):
-#     # AR:
-#     # إنشاء أو تحديث المشاركة بالقيمة الحالية فقط؛ لا يتم الاحتفاظ
-#     # بصلاحية كتابة قديمة عندما يصبح المستخدم سكرتيراً للقراءة فقط.
-#     #
-#     # EN:
-#     # Create or update the share using the current permission only;
-#     # stale write access is not preserved for secretary-only users.
-#     if not target_user or target_user == 'Administrator':
-#         return
-
-#     if not frappe.db.exists('User', target_user):
-#         return
-
-#     existing_share = frappe.db.get_value(
-#         'DocShare',
-#         {
-#             'share_doctype': doc.doctype,
-#             'share_name': doc.name,
-#             'user': target_user,
-#         },
-#         'name'
-#     )
-
-#     values = {
-#         'read': 1,
-#         'write': 1 if can_write else 0,
-#         'submit': 0,
-#         'share': 0,
-#     }
-
-#     if existing_share:
-#         frappe.db.set_value(
-#             'DocShare',
-#             existing_share,
-#             values,
-#             update_modified=False,
-#         )
-#     else:
-#         share = frappe.new_doc('DocShare')
-#         share.share_doctype = doc.doctype
-#         share.share_name = doc.name
-#         share.user = target_user
-#         share.read = values['read']
-#         share.write = values['write']
-#         share.submit = values['submit']
-#         share.share = values['share']
-#         share.insert(ignore_permissions=True)
-
-
-# def remove_share(target_user):
-#     # AR: إزالة مشاركة قديمة عندما لا يعود شرط عرض المعاملة متحققاً.
-#     # EN: Remove a stale share when its visibility condition is no longer met.
-#     if not target_user or target_user == 'Administrator':
-#         return
-
-#     existing_share = frappe.db.get_value(
-#         'DocShare',
-#         {
-#             'share_doctype': doc.doctype,
-#             'share_name': doc.name,
-#             'user': target_user,
-#         },
-#         'name'
-#     )
-
-#     if existing_share:
-#         frappe.delete_doc(
-#             'DocShare',
-#             existing_share,
-#             ignore_permissions=True,
-#             force=True,
-#         )
-
-
-# def auto_share_material_request():
-#     try:
-#         actor_users = []
-#         secretary_users = []
-
-#         # AR:
-#         # قاعدة السكرتارية موحدة: لا يظهر الطلب للسكرتير لمجرد أن مديره
-#         # هو المنشئ؛ يظهر فقط عندما يكون مديره صاحب الإجراء الحالي.
-#         #
-#         # EN:
-#         # The secretary rule is uniform: a request is not visible merely
-#         # because their principal created it; it is visible only while that
-#         # principal is the current workflow actor.
-#         managed_secretaries = get_all_secretary_users()
-
-#         state_role_map = {
-#             'Pending Stock Check': 'Warehouse Manager',
-#             'Pending HR Manager': 'HR Manager',
-#             'Pending Accounts Manager': 'Accounts Manager',
-#             'Pending Sec Gen': 'Secretary General',
-#             'Pending President': 'University President',
-#         }
-
-#         if doc.workflow_state == 'Pending Direct Supervisor':
-#             manager_user = get_employee_user(doc.reports_to)
-#             if manager_user:
-#                 actor_users.append(manager_user)
-
-#         elif doc.workflow_state in state_role_map:
-#             actor_users.extend(
-#                 get_enabled_users_with_role(
-#                     state_role_map[doc.workflow_state]
-#                 )
-#             )
-
-#         # AR:
-#         # سكرتير صاحب الإجراء الحالي يرى الطلب للقراءة والطباعة فقط، بما في
-#         # ذلك سكرتير الأمين العام وسكرتير رئيس الجامعة عندما تصل المعاملة
-#         # إلى مرحلة مسؤولهم.
-#         #
-#         # EN:
-#         # The current workflow actor's secretary gets read/print-only access,
-#         # including Secretary General and President secretaries when the
-#         # request reaches their principal's stage.
-#         for actor_user in actor_users:
-#             actor_secretary = get_user_secretary(actor_user)
-
-#             if actor_secretary:
-#                 secretary_users.append(actor_secretary)
-
-#         actor_user_set = set(actor_users)
-#         secretary_user_set = set(secretary_users)
-
-#         # AR:
-#         # إزالة مشاركة السكرتير عندما لا يعود مديره صاحب الإجراء الحالي.
-#         # لا نمس مشاركة السكرتير إذا كان هو نفسه صاحب الإجراء.
-#         #
-#         # EN:
-#         # Remove a secretary share when their principal is no longer the
-#         # current actor. Keep it if the secretary is the actor themselves.
-#         for managed_secretary in managed_secretaries:
-#             if (
-#                 managed_secretary not in secretary_user_set
-#                 and managed_secretary not in actor_user_set
-#             ):
-#                 remove_share(managed_secretary)
-
-#         for actor_user in actor_user_set:
-#             upsert_share(actor_user, True)
-
-#         for secretary_user in secretary_user_set:
-#             upsert_share(
-#                 secretary_user,
-#                 secretary_user in actor_user_set,
-#             )
-
-#     except Exception as error:
-#         frappe.log_error(
-#             message=str(error),
-#             title="⚠️ " + _("Material Request Auto Share Failed"),
-#         )
-
-
-# auto_share_ ()
-# '''
-
-#     script.insert(ignore_permissions=True)
-
 
 def create_sharing_server_script():
     """
@@ -1302,7 +1081,9 @@ def create_material_request_workflow():
         {
             "state": "Pending Direct Supervisor",
             "doc_status": 0,
-            "allow_edit": "Employee",
+            # AR: لا يتطلب دوراً مخصصاً؛ الوصول الفعلي يأتي عبر DocShare.
+            # EN: No custom role is required; actual access comes from DocShare.
+            "allow_edit": "All",
         },
         {
             "state": "Pending Stock Check",
@@ -1377,14 +1158,18 @@ def create_material_request_workflow():
             "state": "Pending Direct Supervisor",
             "action": "Direct Supervisor Approve",
             "next_state": "Pending Stock Check",
-            "allowed": "Direct Supervisor",
+            # AR: All دور تلقائي لكل مستخدم؛ شرط reports_to هو المحدد الفعلي.
+            # EN: All is automatic; reports_to is the effective authorization check.
+            "allowed": "All",
             "condition": direct_supervisor_condition,
         },
         {
             "state": "Pending Direct Supervisor",
             "action": "Reject",
             "next_state": "Rejected",
-            "allowed": "Direct Supervisor",
+            # AR: All دور تلقائي لكل مستخدم؛ شرط reports_to هو المحدد الفعلي.
+            # EN: All is automatic; reports_to is the effective authorization check.
+            "allowed": "All",
             "condition": direct_supervisor_condition,
         },
         {
@@ -1629,35 +1414,7 @@ def resync_all_material_request_shares():
 
     return run_resync()
 
-# def resync_all_material_request_shares():
-#     '''
-#     AR:
-#         إعادة مزامنة مشاركات جميع طلبات المواد القديمة والحالية.
-
-#         كل سكرتير يشاهد الطلب فقط إذا كان مسؤوله صاحب الإجراء الحالي؛
-#         لا يمنح إنشاء المعاملة للسكرتير أي وصول خارج مرحلة مديره.
-
-#         جميع مشاركات السكرتارية تكون للقراءة والطباعة فقط، وتزال
-#         المشاركات القديمة عند انتهاء سبب الوصول.
-
-#     EN:
-#         Re-sync all existing Material Request shares.
-
-#         A secretary can see a request only when their principal is the current
-#         workflow actor; being the request creator grants no extra secretary
-#         access. Stale shares are removed.
-#     '''
-#     from frappe import share as frappe_share
-
-#     state_role_map = {
-#         "Pending Stock Check": "Warehouse Manager",
-#         "Pending HR Manager": "HR Manager",
-#         "Pending Accounts Manager": "Accounts Manager",
-#         "Pending Sec Gen": "Secretary General",
-#         "Pending President": "University President",
-#     }
     
-
     def get_user_secretary(target_user):
         '''Return the secretary User linked to a specific User.'''
         if not target_user:
@@ -1887,7 +1644,6 @@ def audit_material_request_access(docname):
         frappe.throw("❌ " + frappe._("Material Request %s does not exist.") % docname)
 
     roles_to_check = [
-        "Direct Supervisor",
         "Warehouse Manager",
         "HR Manager",
         "Accounts Manager",
@@ -1900,6 +1656,60 @@ def audit_material_request_access(docname):
     results = []
 
     try:
+        request_doc = frappe.get_doc("Material Request", docname)
+        manager_user = (
+            frappe.db.get_value(
+                "Employee",
+                request_doc.reports_to,
+                "user_id",
+            )
+            if request_doc.reports_to
+            else None
+        )
+
+        # AR: فحص المسؤول المباشر الفعلي من reports_to دون أي دور مخصص.
+        # EN: Audit the actual reports_to user without a custom role.
+        manager_row = {
+            "role": "reports_to user",
+            "user": manager_user,
+            "read": False,
+            "write": False,
+            "actions": [],
+            "error": None,
+        }
+
+        if not manager_user:
+            manager_row["error"] = "reports_to has no linked User"
+        else:
+            try:
+                frappe.set_user(manager_user)
+                manager_doc = frappe.get_doc("Material Request", docname)
+                manager_row["read"] = frappe.has_permission(
+                    "Material Request",
+                    ptype="read",
+                    doc=manager_doc,
+                    user=manager_user,
+                    throw=False,
+                )
+                manager_row["write"] = frappe.has_permission(
+                    "Material Request",
+                    ptype="write",
+                    doc=manager_doc,
+                    user=manager_user,
+                    throw=False,
+                )
+                if manager_row["read"]:
+                    manager_row["actions"] = [
+                        transition.get("action")
+                        for transition in get_transitions(manager_doc)
+                    ]
+            except Exception as error:
+                manager_row["error"] = (
+                    type(error).__name__ + ": " + str(error)
+                )
+
+        results.append(manager_row)
+
         for role in roles_to_check:
             users = frappe.get_all(
                 "Has Role",

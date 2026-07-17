@@ -1,13 +1,30 @@
-// ======================================================
-// masar_requests - Leave Application Partial Leave UI
-// Half Day + Quarter Day + Hourly Leave
-// UI only. Actual deduction is handled by Python Override.
-// No workflow button manipulation here.
-// ======================================================
+// ============================================================================
+// AR: واجهة طلب الإجازة في تطبيق Masar Requests.
+//     يدعم نصف يوم، ربع يوم، الإجازة بالساعات، وفلترة الموظف البديل
+//     ليظهر فقط موظفو نفس إدارة مقدم الطلب.
+//
+// EN: Leave Application UI for the Masar Requests app.
+//     Supports half-day, quarter-day, hourly leave, and substitute filtering
+//     so only employees from the applicant's department are displayed.
+//
+// AR: هذا الملف مسؤول عن واجهة المستخدم فقط، أما التحقق النهائي والحسم
+//     فيتم على الخادم داخل ملفات Python.
+// EN: This file handles client-side behavior only. Final validation and
+//     leave deduction are enforced server-side in Python.
+// ============================================================================
 
 console.log("masar_requests partial leave JS loaded");
 
 frappe.ui.form.on("Leave Application", {
+    setup(frm) {
+        // AR: تسجيل استعلام مخصص لحقل الموظف البديل عند تهيئة النموذج.
+        //     الاستعلام يعرض موظفي نفس إدارة مقدم الطلب فقط.
+        // EN: Register a custom query for the substitute employee field when
+        //     the form is initialized. The query returns employees from the
+        //     applicant's department only.
+        masar_requests_set_substitute_employee_query(frm);
+    },
+
     refresh(frm) {
         masar_requests_inject_leave_application_styles();
         masar_requests_decorate_leave_application_form(frm);
@@ -25,6 +42,18 @@ frappe.ui.form.on("Leave Application", {
     },
 
     employee(frm) {
+        // AR: عند تغيير الموظف مقدم الطلب، يجب مسح الموظف البديل السابق؛
+        //     لأن البديل القديم قد يكون تابعًا لإدارة مختلفة.
+        // EN: When the leave applicant changes, clear the previously selected
+        //     substitute because that employee may belong to another department.
+        if (frm.doc.custom_substitute_employee) {
+            frm.set_value("custom_substitute_employee", null);
+        }
+
+        // AR: إعادة ربط فلتر الموظف البديل بالإدارة الجديدة لمقدم الطلب.
+        // EN: Re-bind the substitute filter to the new applicant's department.
+        masar_requests_set_substitute_employee_query(frm);
+
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
         masar_requests_decorate_leave_application_form(frm);
@@ -175,6 +204,44 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_validate_partial_leave_client(frm);
     }
 });
+
+
+// ============================================================================
+// AR: فلترة الموظف البديل حسب إدارة مقدم طلب الإجازة.
+// EN: Filter the substitute employee by the leave applicant's department.
+// ============================================================================
+
+function masar_requests_set_substitute_employee_query(frm) {
+    // AR: التوقف بأمان إذا لم يكن الحقل المخصص موجودًا في النموذج.
+    // EN: Exit safely when the custom substitute field is not present.
+    if (!frm.fields_dict.custom_substitute_employee) return;
+
+    // AR: ربط حقل الموظف البديل باستعلام Python مخصص على الخادم.
+    // EN: Bind the substitute field to a custom server-side Python query.
+    frm.set_query("custom_substitute_employee", function () {
+        // AR: لا تعرض أي موظف قبل تحديد مقدم طلب الإجازة.
+        // EN: Return no employees until the leave applicant is selected.
+        if (!frm.doc.employee) {
+            return {
+                filters: {
+                    name: ["=", ""],
+                },
+            };
+        }
+
+        // AR: إرسال الموظف الحالي إلى الخادم؛ ليحدد الخادم إدارته ويعيد
+        //     الموظفين النشطين من الإدارة نفسها فقط.
+        // EN: Send the selected employee to the server. The server resolves
+        //     the employee's department and returns active employees from the
+        //     same department only.
+        return {
+            query: "masar_requests.leave_application_permissions.get_same_department_substitute_employees",
+            filters: {
+                employee: frm.doc.employee,
+            },
+        };
+    });
+}
 
 
 // ======================================================

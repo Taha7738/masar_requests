@@ -1,6 +1,11 @@
+import json
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+
+
+
 
 # ==========================================
 # ثوابت سير العمل / Workflow Constants
@@ -58,7 +63,11 @@ def setup_leave_and_shift_all():
     fix_leave_application_link_permissions()
     fix_leave_decimal_precision()
 
-    # 5. إنشاء سير عمل الإجازات / Create leave application workflow
+    # 5. تطبيق ترتيب وواجهة نموذج الإجازة حسب متطلبات المشروع
+    # 5. Apply the Leave Application layout and ordering preferences
+    apply_leave_application_layout_preferences()
+
+    # 6. إنشاء سير عمل الإجازات / Create leave application workflow
     create_leave_application_workflow()
 
     # تنظيف الكاش / Clear cache
@@ -316,6 +325,18 @@ def get_leave_and_shift_custom_fields():
                 "description": "Estimated balance after this request.",
             },
             {
+                # AR:
+                # فاصل أعمدة مساعد لعرض رصيد الإجازة الفعلي واعتماد المسؤول المباشر
+                # في نفس السطر داخل عمودين متجاورين.
+                #
+                # EN:
+                # Helper column break used to render Actual Leave Balance and
+                # Direct Manager approval side by side on the same row.
+                "fieldname": "custom_balance_manager_column_break",
+                "fieldtype": "Column Break",
+                "insert_after": "custom_balance_after_this_request",
+            },
+            {
                 "fieldname": "quarter_day",
                 "label": "Quarter Day",
                 "fieldtype": "Check",
@@ -469,6 +490,409 @@ def create_direct_manager_secretary_fields():
     Adds secretary/delegate fields for direct manager approval.
     """
     create_custom_fields(get_direct_manager_secretary_fields(), update=True)
+
+
+def apply_leave_application_layout_preferences():
+    """
+    AR:
+        تطبيق ترتيب وواجهة نموذج طلب الإجازة وفق المتطلبات التالية:
+        1) تنظيم حقول نصف يوم وربع يوم والإجازة بالساعات.
+        2) عرض رصيد الإجازة الفعلي واعتماد المسؤول المباشر في نفس السطر
+           داخل عمودين متجاورين.
+        3) إخفاء اسم الموظف وإظهار الموظف البديل مكانه في الجزء العلوي.
+        4) إخفاء قسم الاعتماد/الموافقة القياسي وقسم تفاصيل أخرى.
+
+        هذه الدالة لا تغيّر منطق سير العمل ولا صلاحيات الحقول؛
+        هي مسؤولة فقط عن ترتيب الواجهة وخصائص الإظهار.
+
+    EN:
+        Apply the Leave Application form layout according to the following requirements:
+        1) Organize the Half Day, Quarter Day, and Hourly Leave fields.
+        2) Show Actual Leave Balance and Direct Manager approval on the same row
+           in two adjacent columns.
+        3) Hide Employee Name and show Substitute Employee in its place near the top.
+        4) Hide the standard Approval section and the Other Details section.
+
+        This function does not change workflow logic or field permissions;
+        it only controls the visual layout and visibility properties.
+    """
+
+    doctype = LEAVE_APPLICATION_DOCTYPE
+
+    # ------------------------------------------------------------------
+    # AR: ترتيب الحقول النهائي داخل النموذج.
+    # EN: Final field order inside the form.
+    # ------------------------------------------------------------------
+    preferred_order = [
+        # ==============================================================
+        # AR: الحقول الإدارية الأساسية.
+        # EN: Core administrative fields.
+        # ==============================================================
+        "workflow_state",
+        "naming_series",
+
+        # ==============================================================
+        # AR:
+        # ترتيب الجزء العلوي من النموذج:
+        # - الموظف في العمود الأيمن.
+        # - الموظف البديل تحت الموظف مباشرة في العمود نفسه.
+        # - نوع الإجازة في العمود الأيسر.
+        #
+        # EN:
+        # Top form layout order:
+        # - Employee appears in the right column.
+        # - Substitute Employee appears directly below Employee
+        #   in the same column.
+        # - Leave Type appears in the left column.
+        # ==============================================================
+        "employee",
+        "custom_substitute_employee",
+        "column_break_4",
+        "leave_type",
+
+        # AR: هذه الحقول ستبقى موجودة في الترتيب لكن سيتم إخفاؤها.
+        # EN: These fields remain in the order but will be hidden.
+        "company",
+        "department",
+        "employee_name",
+
+        # ==============================================================
+        # AR: التواريخ والأسباب.
+        # EN: Dates and reasons.
+        # ==============================================================
+        "section_break_5",
+        "from_date",
+        "to_date",
+        "description",
+        "column_break1",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "custom_partial_leave_date",
+        "custom_partial_from_time_ar",
+        "custom_partial_to_time_ar",
+        "custom_partial_time_ar_display",
+        "custom_leave_hours",
+        "custom_shift_hours",
+        "total_leave_days",
+        "half_day_date",
+        "custom_leave_period",
+        "from_time",
+        "to_time",
+        "leave_balance",
+
+        # ==============================================================
+        # AR: رصيد الإجازة واعتماد المسؤول المباشر.
+        # EN: Leave balance and direct manager approval.
+        # ==============================================================
+        "custom_balance_section",
+        "custom_actual_leave_balance",
+        "custom_balance_after_this_request",
+        "custom_balance_manager_column_break",
+        "custom_direct_manager_employee",
+        "custom_direct_manager_approval",
+        "custom_direct_manager_user",
+        "custom_direct_manager_secretary_employee",
+        "custom_direct_manager_secretary_user",
+        "custom_direct_manager_section",
+
+        # ==============================================================
+        # AR: بيانات الموظف البديل الإضافية.
+        # EN: Additional substitute-related fields.
+        # ==============================================================
+        "custom_substitute_section",
+        "custom_substitute_approval",
+        "custom_substitute_user",
+
+        # ==============================================================
+        # AR: الأقسام المخفية لاحقًا.
+        # EN: Sections hidden later.
+        # ==============================================================
+        "section_break_7",
+        "leave_approver",
+        "leave_approver_name",
+        "follow_via_email",
+        "column_break_18",
+        "posting_date",
+        "status",
+        "sb_other_details",
+        "salary_slip",
+        "color",
+        "column_break_17",
+        "letter_head",
+        "amended_from",
+    ]
+    meta = frappe.get_meta(doctype, cached=False)
+    existing_fields = [field.fieldname for field in meta.fields if field.fieldname]
+    existing_fields_set = set(existing_fields)
+
+    final_order = [
+        fieldname
+        for fieldname in preferred_order
+        if fieldname in existing_fields_set
+    ]
+
+    # ------------------------------------------------------------------
+    # AR:
+    # يجب تعيين قيمة افتراضية صحيحة للشركة قبل إخفائها؛ لأن حقل
+    # Company إلزامي في Leave Application، وFrappe يمنع إخفاء أي
+    # حقل إلزامي لا يملك قيمة افتراضية.
+    #
+    # EN:
+    # A valid default Company must be assigned before hiding the field,
+    # because Company is mandatory in Leave Application and Frappe does
+    # not allow a mandatory field to be hidden without a default value.
+    # ------------------------------------------------------------------
+    company_field = meta.get_field("company")
+
+    if company_field:
+        company_candidates = [
+            company_field.default,
+            frappe.db.get_single_value(
+                "Global Defaults",
+                "default_company",
+            ),
+            frappe.db.get_value(
+                "Company",
+                {},
+                "name",
+            ),
+        ]
+
+        default_company = next(
+            (
+                company
+                for company in company_candidates
+                if company and frappe.db.exists("Company", company)
+            ),
+            None,
+        )
+
+        if not default_company:
+            frappe.throw(
+                "Unable to hide Company because no default Company "
+                "is configured in Global Defaults and no Company "
+                "record exists."
+            )
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname="company",
+            property="default",
+            value=default_company,
+            property_type="Data",
+        )
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname="company",
+            property="hidden",
+            value=1,
+            property_type="Check",
+        )
+
+    # ------------------------------------------------------------------
+    # AR:
+    # إضافة سلسلة التسمية المطلوبة إلى خيارات الحقل عند عدم وجودها،
+    # ثم اعتمادها كقيمة افتراضية وإخفاء الحقل من الواجهة.
+    #
+    # EN:
+    # Add the required naming series to the field options when missing,
+    # then set it as the default value and hide the field from the form.
+    # ------------------------------------------------------------------
+    required_naming_series = "HR-LAP-.YYYY.-"
+    naming_series_field = meta.get_field("naming_series")
+
+    if naming_series_field:
+        naming_series_options = [
+            option.strip()
+            for option in (naming_series_field.options or "").splitlines()
+            if option.strip()
+        ]
+
+        if required_naming_series not in naming_series_options:
+            naming_series_options.insert(0, required_naming_series)
+
+            make_property_setter(
+                doctype=doctype,
+                fieldname="naming_series",
+                property="options",
+                value="\n".join(naming_series_options),
+                property_type="Text",
+            )
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname="naming_series",
+            property="default",
+            value=required_naming_series,
+            property_type="Text",
+        )
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname="naming_series",
+            property="hidden",
+            value=1,
+            property_type="Check",
+        )
+
+    # AR: الاحتفاظ بأي حقول إضافية مستقبلية بدل فقدانها من الواجهة.
+    # EN: Preserve any future extra fields instead of dropping them from the UI.
+    for fieldname in existing_fields:
+        if fieldname not in final_order:
+            final_order.append(fieldname)
+
+    make_property_setter(
+        doctype=doctype,
+        fieldname=None,
+        property="field_order",
+        value=json.dumps(final_order),
+        property_type="Text",
+        for_doctype=True,
+    )
+
+    # ------------------------------------------------------------------
+    # AR: إخفاء الحقول والأقسام غير المطلوبة في الواجهة النهائية.
+    # EN: Hide fields and sections that should not appear in the final UI.
+    # ------------------------------------------------------------------
+    fields_to_hide = [
+        # AR: naming_series وcompany تمت معالجتهما أعلاه بعد ضبط القيم الافتراضية.
+        # EN: naming_series and company are handled above after setting defaults.
+        "department",
+        "employee_name",
+
+        "section_break_7",
+        "leave_approver",
+        "leave_approver_name",
+        "follow_via_email",
+        "column_break_18",
+        "posting_date",
+        "status",
+
+        "sb_other_details",
+        "salary_slip",
+        "color",
+        "column_break_17",
+        "letter_head",
+        "amended_from",
+
+        "custom_direct_manager_section",
+        "custom_substitute_section",
+        "custom_substitute_user",
+        "custom_direct_manager_user",
+        "custom_direct_manager_secretary_employee",
+        "custom_direct_manager_secretary_user",
+
+        "half_day_date",
+        "leave_balance",
+        "custom_leave_period",
+        "from_time",
+        "to_time",
+    ]
+
+    for fieldname in fields_to_hide:
+        if meta.has_field(fieldname):
+            make_property_setter(
+                doctype=doctype,
+                fieldname=fieldname,
+                property="hidden",
+                value=1,
+                property_type="Check",
+            )
+
+    # ------------------------------------------------------------------
+    # AR: إظهار الحقول التي نحتاجها صراحةً في الواجهة الجديدة.
+    # EN: Explicitly show the fields needed in the new layout.
+    # ------------------------------------------------------------------
+    fields_to_show = [
+        "custom_substitute_employee",
+        "custom_substitute_approval",
+        "custom_balance_section",
+        "custom_actual_leave_balance",
+        "custom_balance_after_this_request",
+        "custom_balance_manager_column_break",
+        "custom_direct_manager_employee",
+        "custom_direct_manager_approval",
+        "custom_partial_leave_date",
+        "custom_partial_from_time_ar",
+        "custom_partial_to_time_ar",
+        "custom_partial_time_ar_display",
+        "custom_leave_hours",
+        "custom_shift_hours",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "description",
+        "from_date",
+        "to_date",
+        "total_leave_days",
+    ]
+
+    for fieldname in fields_to_show:
+        if meta.has_field(fieldname):
+            make_property_setter(
+                doctype=doctype,
+                fieldname=fieldname,
+                property="hidden",
+                value=0,
+                property_type="Check",
+            )
+
+    # ------------------------------------------------------------------
+    # AR:
+    # تنظيم الحقول الشرطية الخاصة بنصف يوم وربع يوم والإجازة بالساعات.
+    # EN:
+    # Organize conditional fields for Half Day, Quarter Day, and Hourly Leave.
+    # ------------------------------------------------------------------
+    partial_eval = "eval:doc.half_day == 1 || doc.quarter_day == 1 || doc.is_hourly == 1"
+    hourly_eval = "eval:doc.is_hourly == 1"
+
+    conditional_fields = {
+        "custom_partial_leave_date": partial_eval,
+        "custom_partial_from_time_ar": partial_eval,
+        "custom_partial_to_time_ar": hourly_eval,
+        "custom_partial_time_ar_display": partial_eval,
+        "custom_leave_hours": partial_eval,
+        "custom_shift_hours": partial_eval,
+    }
+
+    for fieldname, depends_on in conditional_fields.items():
+        if meta.has_field(fieldname):
+            make_property_setter(
+                doctype=doctype,
+                fieldname=fieldname,
+                property="depends_on",
+                value=depends_on,
+                property_type="Data",
+            )
+
+    # ------------------------------------------------------------------
+    # AR:
+    # تحسين العناوين العربية/الإنجليزية للحقول الظاهرة في القسم العلوي
+    # وقسم رصيد الإجازة والمسؤول المباشر.
+    # EN:
+    # Improve field labels for the top area and for balance/direct-manager fields.
+    # ------------------------------------------------------------------
+    label_updates = {
+        "custom_substitute_employee": "Substitute Employee",
+        "custom_substitute_approval": "Substitute Approval Status",
+        "custom_balance_section": "Actual Leave Balance",
+        "custom_direct_manager_employee": "Direct Manager",
+        "custom_direct_manager_approval": "Direct Manager Approval Status",
+    }
+
+    for fieldname, label in label_updates.items():
+        if meta.has_field(fieldname):
+            make_property_setter(
+                doctype=doctype,
+                fieldname=fieldname,
+                property="label",
+                value=label,
+                property_type="Data",
+            )
+
+    frappe.clear_cache(doctype=doctype)
 
 
 # ==========================================

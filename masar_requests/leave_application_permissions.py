@@ -308,6 +308,73 @@ def _can_write_leave(doc, user):
 
 
 # ======================================================================
+# AR: البحث عن موظفين بدلاء من نفس إدارة مقدم الطلب
+# EN: Search substitute employees from the applicant's department
+# ======================================================================
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_same_department_substitute_employees(
+    doctype, txt, searchfield, start, page_len, filters
+):
+    """
+    AR:
+        إرجاع الموظفين النشطين في نفس إدارة الموظف مقدم الطلب فقط،
+        مع استبعاد مقدم الطلب والموظفين غير المرتبطين بحساب مستخدم.
+
+    EN:
+        Return active employees from the applicant's department only,
+        excluding the applicant and employees without a linked User.
+    """
+    filters = frappe.parse_json(filters) if isinstance(filters, str) else (filters or {})
+    employee = filters.get("employee")
+
+    if not employee:
+        return []
+
+    applicant = frappe.db.get_value(
+        "Employee",
+        employee,
+        ["department", "company"],
+        as_dict=True,
+    )
+
+    if not applicant or not applicant.department:
+        return []
+
+    values = {
+        "employee": employee,
+        "department": applicant.department,
+        "company": applicant.company or "",
+        "txt": f"%{txt or ''}%",
+        "start": int(start or 0),
+        "page_len": int(page_len or 20),
+    }
+
+    return frappe.db.sql(
+        """
+        SELECT
+            employee.name,
+            employee.employee_name,
+            employee.department
+        FROM `tabEmployee` employee
+        WHERE employee.status = 'Active'
+          AND employee.department = %(department)s
+          AND employee.name != %(employee)s
+          AND COALESCE(employee.user_id, '') != ''
+          AND (%(company)s = '' OR employee.company = %(company)s)
+          AND (
+                employee.name LIKE %(txt)s
+                OR employee.employee_name LIKE %(txt)s
+          )
+        ORDER BY employee.employee_name ASC
+        LIMIT %(start)s, %(page_len)s
+        """,
+        values,
+    )
+
+
+# ======================================================================
 # AR: التحقق الخادمي عند حفظ طلب الإجازة
 # EN: Server-side validation when saving Leave Application
 # ======================================================================
@@ -357,14 +424,50 @@ def set_substitute_user(doc):
             _("The substitute employee cannot be the same as the leave applicant.")
         )
 
-    substitute_data = frappe.db.get_value(
+    # AR: جلب إدارة مقدم الطلب للتحقق من أن البديل من الإدارة نفسها.
+    # EN: Load the applicant's department to validate the substitute.
+    applicant_data = frappe.db.get_value(
         "Employee",
-        substitute_employee,
-        ["user_id", "employee_name"],
+        doc.get("employee"),
+        ["department", "company"],
         as_dict=True,
     )
 
-    if not substitute_data or not substitute_data.user_id:
+    if not applicant_data or not applicant_data.department:
+        frappe.throw(
+            _("The employee {0} does not have a Department set.").format(
+                doc.get("employee")
+            )
+        )
+
+    substitute_data = frappe.db.get_value(
+        "Employee",
+        substitute_employee,
+        ["user_id", "employee_name", "department", "company", "status"],
+        as_dict=True,
+    )
+
+    if not substitute_data:
+        frappe.throw(_("The selected substitute employee does not exist."))
+
+    if substitute_data.status != "Active":
+        frappe.throw(_("The substitute employee must be active."))
+
+    if substitute_data.department != applicant_data.department:
+        frappe.throw(
+            _(
+                "The substitute employee must belong to the same Department as the leave applicant."
+            )
+        )
+
+    if (applicant_data.company or "") != (substitute_data.company or ""):
+        frappe.throw(
+            _(
+                "The substitute employee must belong to the same Company as the leave applicant."
+            )
+        )
+
+    if not substitute_data.user_id:
         frappe.throw(
             _("The substitute employee {0} does not have a linked User ID.").format(
                 substitute_employee
