@@ -44,9 +44,7 @@ app_license = "mit"
 # EN:
 # Global JavaScript files included in Desk.
 # This list is empty because our scripts are attached to specific DocTypes.
-app_include_js = [
-
-]
+app_include_js = []
 
 
 # AR:
@@ -75,18 +73,20 @@ doctype_js = {
 # ======================================================
 
 # AR:
-# تعمل هذه الدالة مباشرة بعد تثبيت التطبيق.
+# تشغيل إعداد التثبيت الأولي الموجود في install.py.
 #
 # EN:
-# This function runs immediately after installing the app.
+# Run the initial installation setup defined in install.py.
 after_install = "masar_requests.install.after_install"
 
 
 # AR:
-# تعمل هذه الدالة بعد تنفيذ migrate.
+# بعد كل migrate يتم تشغيل تنظيف الكاش من install.py، بينما تُطبّق
+# تغييرات قاعدة البيانات مرة واحدة عبر patches.txt.
 #
 # EN:
-# This function runs after migration.
+# After every migration, install.py clears the relevant caches, while
+# database changes are applied once through patches.txt.
 after_migrate = "masar_requests.install.after_migrate"
 
 
@@ -111,8 +111,10 @@ before_uninstall = "masar_requests.install.before_uninstall"
 # This function controls which Leave Application records
 # appear in lists, reports, and database queries.
 permission_query_conditions = {
-    "Leave Application":
-        "masar_requests.leave_application_permissions.leave_application_query",
+    "Leave Application": (
+        "masar_requests.leave_application_permissions."
+        "leave_application_query"
+    ),
 }
 
 
@@ -129,8 +131,10 @@ permission_query_conditions = {
 # After permission_query_conditions filters the list,
 # this function validates read, write, print, delete, and other operations.
 has_permission = {
-    "Leave Application":
-        "masar_requests.leave_application_permissions.leave_application_has_permission",
+    "Leave Application": (
+        "masar_requests.leave_application_permissions."
+        "leave_application_has_permission"
+    ),
 }
 
 
@@ -147,8 +151,10 @@ has_permission = {
 # Replace the standard Leave Application class with a custom class
 # supporting half-day, quarter-day, and hourly leave.
 override_doctype_class = {
-    "Leave Application":
-        "masar_requests.leave_application_partial_leave.CustomLeaveApplication",
+    "Leave Application": (
+        "masar_requests.leave_application_partial_leave."
+        "CustomLeaveApplication"
+    ),
 }
 
 
@@ -166,8 +172,10 @@ doc_events = {
         # EN:
         # Runs before save to validate permissions
         # and populate substitute, manager, and secretary data.
-        "validate":
-            "masar_requests.leave_application_permissions.validate_leave_application",
+        "validate": (
+            "masar_requests.leave_application_permissions."
+            "validate_leave_application"
+        ),
 
         # AR:
         # بعد إنشاء الطلب لأول مرة تتم مشاركة المستند
@@ -176,8 +184,10 @@ doc_events = {
         # EN:
         # After initial insertion, share the document
         # with its related participants.
-        "after_insert":
-            "masar_requests.leave_application_permissions.sync_leave_application_shares",
+        "after_insert": (
+            "masar_requests.leave_application_permissions."
+            "sync_leave_application_shares"
+        ),
 
         # AR:
         # بعد كل تحديث تتم إعادة مزامنة المشاركات
@@ -186,16 +196,20 @@ doc_events = {
         # EN:
         # After each update, re-sync shares
         # and send workflow notifications.
-        "on_update":
-            "masar_requests.leave_application_permissions.on_update_leave_application",
+        "on_update": (
+            "masar_requests.leave_application_permissions."
+            "on_update_leave_application"
+        ),
 
         # AR:
         # نقطة مخصصة لتنظيف المشاركات عند حذف الطلب.
         #
         # EN:
         # Hook point for cleaning shares when deleting a request.
-        "on_trash":
-            "masar_requests.leave_application_permissions.remove_leave_application_shares",
+        "on_trash": (
+            "masar_requests.leave_application_permissions."
+            "remove_leave_application_shares"
+        ),
     },
 
     "Shift Type": {
@@ -204,8 +218,10 @@ doc_events = {
         #
         # EN:
         # Generate or process shift times before saving Shift Type.
-        "before_save":
-            "masar_requests.overrides.shift_type.generate_shift_times",
+        "before_save": (
+            "masar_requests.overrides.shift_type."
+            "generate_shift_times"
+        ),
     },
 
     "Employee": {
@@ -221,7 +237,7 @@ doc_events = {
             "schedule_workflow_share_resync_after_employee_change"
         ),
     },
-    
+
     "Material Request": {
         "after_insert": (
             "masar_requests.material_request_sharing."
@@ -244,6 +260,4 @@ doc_events = {
             "sync_material_request_shares"
         ),
     },
-
-
 }
