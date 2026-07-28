@@ -8,7 +8,7 @@ app_title = "Masar Requests"
 app_publisher = "AlphaCode"
 
 # AR: وصف التطبيق ووظيفته في النظام / EN: App description and its function in the system
-app_description = "Masar Requests is an application to streamline workflow and paper transactions for."
+app_description = "Masar Requests streamlines leave and material-request workflows for Masar."
 
 # AR: البريد الإلكتروني للتواصل والدعم / EN: Contact and support email
 app_email = "dev@alpha-code.net"
@@ -64,7 +64,11 @@ doctype_js = {
     # AR: تخصيص نموذج طلب المواد
     # EN: Customize the Material Request form
     "Material Request": "public/js/material_request.js",
+    # تخصيص نموذج نوع المهمه الرسمية
+    "Attendance Request": "public/js/attendance_request.js",
 }
+
+
 
 
 # ======================================================
@@ -110,10 +114,17 @@ before_uninstall = "masar_requests.install.before_uninstall"
 # EN:
 # This function controls which Leave Application records
 # appear in lists, reports, and database queries.
+# ======================================================
+# EN: List-level permission query conditions
+# ======================================================
 permission_query_conditions = {
     "Leave Application": (
         "masar_requests.leave_application_permissions."
         "leave_application_query"
+    ),
+    "Attendance Request": (
+        "masar_requests.attendance_request_permissions."
+        "attendance_request_query"
     ),
 }
 
@@ -130,10 +141,23 @@ permission_query_conditions = {
 # EN:
 # After permission_query_conditions filters the list,
 # this function validates read, write, print, delete, and other operations.
+# ======================================================
+# EN: Individual document permissions
+# ======================================================
 has_permission = {
     "Leave Application": (
         "masar_requests.leave_application_permissions."
         "leave_application_has_permission"
+    ),
+    "Attendance Request": (
+        "masar_requests.attendance_request_permissions."
+        "attendance_request_has_permission"
+    ),
+    # AR: HR User يفتح ويطبع طلبات المواد دون تعديل أو إجراء Workflow.
+    # EN: HR User may open and print Material Requests without editing/workflow actions.
+    "Material Request": (
+        "masar_requests.hr_user_read_only."
+        "material_request_has_permission"
     ),
 }
 
@@ -154,6 +178,12 @@ override_doctype_class = {
     "Leave Application": (
         "masar_requests.leave_application_partial_leave."
         "CustomLeaveApplication"
+    ),
+    # AR: إصلاح آمن لجدول تحذيرات Attendance Request في Frappe/HRMS v15.
+    # EN: Safe Attendance Request warning-table override for Frappe/HRMS v15.
+    "Attendance Request": (
+        "masar_requests.attendance_request_override."
+        "CustomAttendanceRequest"
     ),
 }
 
@@ -239,6 +269,12 @@ doc_events = {
     },
 
     "Material Request": {
+        # AR: قواعد الحماية والانشطار تعمل في Python أصلي قابل للاختبار.
+        # EN: Protection and splitting rules run in testable native Python.
+        "before_save": (
+            "masar_requests.material_request_engine."
+            "before_save_material_request"
+        ),
         "after_insert": (
             "masar_requests.material_request_sharing."
             "sync_material_request_shares"
@@ -258,6 +294,29 @@ doc_events = {
         "on_cancel": (
             "masar_requests.material_request_sharing."
             "sync_material_request_shares"
+        ),
+    },
+
+    "Attendance Request": {
+        "validate": (
+            "masar_requests.attendance_request_permissions."
+            "validate_attendance_request"
+        ),
+        "after_insert": (
+            "masar_requests.attendance_request_permissions."
+            "sync_attendance_request_shares"
+        ),
+        "on_update": (
+            "masar_requests.attendance_request_permissions."
+            "on_update_attendance_request"
+        ),
+        "before_submit": (
+            "masar_requests.attendance_request_permissions."
+            "before_submit_attendance_request"
+        ),
+        "on_submit": (
+            "masar_requests.attendance_request_permissions."
+            "on_submit_attendance_request"
         ),
     },
 }

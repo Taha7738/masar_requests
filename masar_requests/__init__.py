@@ -1,4 +1,4 @@
-__version__ = "1.0.0"
+__version__ = "1.1.1"
 
 
 def _apply_compatible_runtime_patches():
@@ -20,7 +20,12 @@ def _apply_compatible_runtime_patches():
     except Exception:
         # AR: ميزة التقرير اختيارية؛ حاسبة الرصيد الخاصة بطلب الإجازة تبقى فعالة.
         # EN: The report patch is optional; the Leave Application balance logic stays active.
-        pass
+        import logging
+
+        logging.getLogger("masar_requests").warning(
+            "Optional leave balance report patch could not be applied.",
+            exc_info=True,
+        )
 
     try:
         from masar_requests.overrides.shift_type import apply_shift_times_patch
@@ -29,7 +34,12 @@ def _apply_compatible_runtime_patches():
     except Exception:
         # AR: لا نجعل بدء التطبيق يعتمد على واجهة داخلية قابلة للتغير في HRMS.
         # EN: App startup must not depend on a changeable HRMS internal API.
-        pass
+        import logging
+
+        logging.getLogger("masar_requests").warning(
+            "Optional shift-time runtime patch could not be applied.",
+            exc_info=True,
+        )
 
 
 _apply_compatible_runtime_patches()

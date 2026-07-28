@@ -1,12 +1,20 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+
 # AR: استيراد إعدادات مسار للنماذج / EN: Import Masar Requests DocType setup functions
 from masar_requests.setup_leave_and_shift import (
     setup_leave_and_shift_all,
     teardown_leave_and_shift,
 )
-from masar_requests.setup_material_request import setup_material_request_all
+from masar_requests.setup_material_request import (
+    setup_material_request_all,
+    teardown_material_request,
+)
+
+from masar_requests.setup_attendance_request import setup_attendance_request_all
+from masar_requests.uninstall_cleanup import cleanup_attendance_request
+from masar_requests.hr_user_read_only import setup_hr_user_read_only_permissions
 
 
 def after_install(app_name=None):
@@ -32,6 +40,7 @@ def after_migrate():
     frappe.clear_cache(doctype="Leave Application")
     frappe.clear_cache(doctype="Material Request")
     frappe.clear_cache(doctype="Material Request Item")
+    frappe.clear_cache(doctype="Attendance Request")
 
 
 def sync_custom_setup():
@@ -49,10 +58,16 @@ def sync_custom_setup():
 
     setup_leave_and_shift_all()
     setup_material_request_all()
+    setup_attendance_request_all()
+
+    # AR: منح HR User صلاحية عامة للعرض والطباعة فقط للطلبات الثلاثة.
+    # EN: Grant HR User global read/print-only access to the three request types.
+    setup_hr_user_read_only_permissions()
 
     for doctype in core_fields.keys():
         frappe.clear_cache(doctype=doctype)
     frappe.clear_cache(doctype="Material Request")
+    frappe.clear_cache(doctype="Attendance Request")
 
 
 def schedule_workflow_share_resync_after_employee_change(doc, method=None):
@@ -103,6 +118,9 @@ def resync_all_workflow_shares():
     from masar_requests.leave_application_permissions import (
         resync_all_leave_application_shares,
     )
+    from masar_requests.attendance_request_permissions import (
+        resync_all_attendance_request_shares,
+    )
     from masar_requests.setup_material_request import (
         resync_all_material_request_shares,
         sync_material_request_secretary_roles,
@@ -110,6 +128,7 @@ def resync_all_workflow_shares():
 
     secretary_roles_assigned = sync_material_request_secretary_roles()
     leave_requests = resync_all_leave_application_shares()
+    attendance_requests = resync_all_attendance_request_shares()
     material_requests = resync_all_material_request_shares()
 
     frappe.cache().delete_value(
@@ -117,12 +136,15 @@ def resync_all_workflow_shares():
     )
     return {
         "leave_requests": leave_requests,
+        "attendance_requests": attendance_requests,
         "material_requests": material_requests,
         "secretary_roles_assigned": secretary_roles_assigned,
     }
 
 # AR: تعريف الحقول الأساسية لمستخدمي النظام والتعليقات / EN: Define core fields for system users and comments
 def get_core_custom_fields():
+    # AR: إرجاع تعريفات الحقول الأساسية التي يديرها التطبيق.
+    # EN: Return definitions for the core fields managed by the app.
     return {
         # "User": [
         #     {"fieldname": "custom_employment_data_tab", "fieldtype": "Tab Break", "label": "Employment Data", "insert_after": "user_image"},
@@ -140,6 +162,8 @@ def get_core_custom_fields():
 
 # AR: تنظيف قاعدة البيانات قبل إزالة التطبيق / EN: Clean DB before app uninstallation
 def before_uninstall():
+    # AR: تنظيف إعدادات التطبيق المملوكة له قبل إلغاء التثبيت.
+    # EN: Remove app-owned configuration before uninstalling the app.
     core_fields = get_core_custom_fields()
     for doctype, fields in core_fields.items():
         frappe.db.delete(
@@ -148,4 +172,6 @@ def before_uninstall():
         )
         frappe.clear_cache(doctype=doctype)
     
+    teardown_material_request()
     teardown_leave_and_shift()
+    cleanup_attendance_request()

@@ -1,7 +1,29 @@
 [pre_model_sync]
 # Patches added in this section will be executed before doctypes are migrated
-# Read docs to understand patches: https://frappeframework.com/docs/v14/user/en/database-migrations
 
 [post_model_sync]
-# Patches added in this section will be executed after doctypes are migrated
+# AR: ترقيات مستقرة غير متعلقة بإصدارات Attendance القديمة.
+# EN: Stable migrations unrelated to obsolete Attendance versions.
 masar_requests.patches.apply_leave_layout_and_material_uom
+masar_requests.patches.migrate_native_material_engine
+
+# AR: الترقية النهائية النظيفة لطلب المهمة والإجازة وصلاحية HR User.
+# EN: Final clean migration for Official Duty, Leave, and HR User access.
+masar_requests.patches.simplify_attendance_leave_workflow_and_hr_user_v13
+
+# AR: إصلاح V14 لمسار رفض البديل واعتماد المدير/الموارد والطباعة.
+# EN: V14 substitute-rejection, manager/HR approval, and print repair.
+masar_requests.patches.fix_attendance_workflow_and_print_v14
+
+# AR: إصلاح V15 لجلب تقرير الإنجاز ومزامنة الطباعة وترجمة إشعارات المهمة والإجازة.
+# EN: V15 Achievement Report print sync and Official Duty/Leave notification translations.
+masar_requests.patches.fix_attendance_print_and_notification_translation_v15
+
+# AR: V16 لإظهار ملاحظة تجاوز المراحل في طباعة الإجازة وطلب المواد فقط.
+# EN: V16 workflow-bypass notes for Leave and Material printing only.
+masar_requests.patches.sync_leave_and_material_bypass_print_v16
+
+
+# AR: V17 لعكس واجهة الإجازة، استثناء طلب HR User الشخصي، وتعريب ملاحظات الطباعة.
+# EN: V17 Leave UI swap, HR User personal-request exemption, and Arabic print notices.
+masar_requests.patches.sync_leave_layout_hr_user_and_arabic_print_v17

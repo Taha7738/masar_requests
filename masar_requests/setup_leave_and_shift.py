@@ -40,6 +40,8 @@ ACTION_REJECT = "Reject"
 # ==========================================
 
 def setup_leave_and_shift_all():
+    # AR: إعداد حقول الإجازة والورديات والواجهة وسير العمل عند التثبيت.
+    # EN: Configure leave and shift fields, layout, and workflow on install.
     """
     الدالة الرئيسية لتشغيل كل إعدادات الإجازات والمناوبات
     Main function to run all Leave and Shift settings
@@ -77,6 +79,8 @@ def setup_leave_and_shift_all():
 
 
 def teardown_leave_and_shift():
+    # AR: إزالة إعدادات الإجازة والورديات التابعة للتطبيق.
+    # EN: Remove app-owned leave and shift configuration.
     """
     إزالة الحقول وسير العمل عند إلغاء تثبيت التطبيق
     Remove fields and workflows upon app uninstallation
@@ -187,10 +191,11 @@ def create_shift_time_child_table():
 
         if updated:
             doc.save(ignore_permissions=True)
-            frappe.db.commit()
 
 
 def reset_partial_time_custom_fields_if_needed():
+    # AR: إعادة إنشاء حقول وقت الإجازة الجزئية إذا كان نوعها غير صحيح.
+    # EN: Recreate partial-time fields when their field type is invalid.
     """
     حذف وإعادة إنشاء الحقول إذا لم تكن من نوع 'وقت'
     Delete and recreate fields if their fieldtype is not 'Time'
@@ -220,6 +225,8 @@ def reset_partial_time_custom_fields_if_needed():
 
 
 def get_leave_and_shift_custom_fields():
+    # AR: إرجاع تعريفات الحقول المخصصة للإجازة والورديات.
+    # EN: Return custom field definitions for leave and shift.
     """
     تعريف الحقول المخصصة الخاصة بالإجازات والمناوبات
     Define Custom Fields for Leave Application and Shift Type
@@ -276,6 +283,7 @@ def get_leave_and_shift_custom_fields():
                 "options": "Employee",
                 "insert_after": "custom_direct_manager_section",
                 "read_only": 1,
+                "hidden": 1,
                 "ignore_user_permissions": 1,
                 "description": "Direct manager fetched automatically from the employee reports_to field.",
             },
@@ -445,6 +453,8 @@ def get_leave_and_shift_custom_fields():
 
 
 def get_direct_manager_secretary_fields():
+    # AR: إرجاع تعريفات حقول المدير المباشر والسكرتير.
+    # EN: Return direct-manager and secretary field definitions.
     """
     حقول السكرتارية / Secretary Fields
     """
@@ -485,6 +495,8 @@ def get_direct_manager_secretary_fields():
 
 
 def create_direct_manager_secretary_fields():
+    # AR: إنشاء أو تحديث حقول المدير المباشر والسكرتير.
+    # EN: Create or update direct-manager and secretary fields.
     """
     إضافة حقول السكرتارية/المندوب لموافقة المدير المباشر
     Adds secretary/delegate fields for direct manager approval.
@@ -557,14 +569,25 @@ def apply_leave_application_layout_preferences():
         "employee_name",
 
         # ==============================================================
-        # AR: التواريخ والأسباب.
-        # EN: Dates and reasons.
+        # AR:
+        # ترتيب قسم التواريخ والإجازة الجزئية والسبب:
+        # - العمود الأيمن: من تاريخ، إلى تاريخ، ثم خيارات الإجازة الجزئية
+        #   وحقولها التابعة.
+        # - العمود الأيسر: السبب وعدد أيام الإجازة.
+        #
+        # بهذه الطريقة يعود حقلا من تاريخ وإلى تاريخ إلى العمود الأيمن،
+        # بينما يبقى حقل السبب في العمود الأيسر كما هو مطلوب.
+        #
+        # EN:
+        # Arrange the date, partial-leave, and reason section:
+        # - Right column: From Date, To Date, then partial-leave options
+        #   and their dependent fields.
+        # - Left column: Reason and Total Leave Days.
+        #
+        # This moves From Date and To Date back to the right column while
+        # keeping the Reason field in the left column.
         # ==============================================================
         "section_break_5",
-        "from_date",
-        "to_date",
-        "description",
-        "column_break1",
         "half_day",
         "quarter_day",
         "is_hourly",
@@ -574,6 +597,10 @@ def apply_leave_application_layout_preferences():
         "custom_partial_time_ar_display",
         "custom_leave_hours",
         "custom_shift_hours",
+        "from_date",
+        "to_date",
+        "column_break1",
+        "description",
         "total_leave_days",
         "half_day_date",
         "custom_leave_period",
@@ -762,6 +789,10 @@ def apply_leave_application_layout_preferences():
         "department",
         "employee_name",
 
+        # AR: إخفاء حقل المسؤول المباشر من الواجهة مع إبقائه داخليًا.
+        # EN: Hide the reports_to field from the UI while preserving it internally.
+        "reports_to",
+
         "section_break_7",
         "leave_approver",
         "leave_approver_name",
@@ -778,6 +809,9 @@ def apply_leave_application_layout_preferences():
         "amended_from",
 
         "custom_direct_manager_section",
+        # AR: إخفاء حالة اعتماد المسؤول المباشر من واجهة الموظف.
+        # EN: Hide Direct Manager Approval Status from the employee-facing form.
+        "custom_direct_manager_approval",
         "custom_substitute_section",
         "custom_substitute_user",
         "custom_direct_manager_user",
@@ -813,7 +847,6 @@ def apply_leave_application_layout_preferences():
         "custom_balance_after_this_request",
         "custom_balance_manager_column_break",
         "custom_direct_manager_employee",
-        "custom_direct_manager_approval",
         "custom_partial_leave_date",
         "custom_partial_from_time_ar",
         "custom_partial_to_time_ar",
@@ -900,6 +933,8 @@ def apply_leave_application_layout_preferences():
 # ==========================================
 
 def fix_leave_decimal_precision():
+    # AR: ضبط الدقة العشرية لحقول أرصدة وأيام الإجازة.
+    # EN: Set decimal precision for leave balance and day fields.
     """
     ضبط الدقة العشرية لحقول الإجازات
     Fix decimal precision for leave fields
@@ -928,6 +963,8 @@ def fix_leave_decimal_precision():
 
 
 def fix_leave_application_link_permissions():
+    # AR: تصحيح خصائص روابط الموظفين لمنع قيود صلاحيات غير مقصودة.
+    # EN: Correct Employee link properties to avoid unintended restrictions.
     """
     إصلاح صلاحيات الروابط في نموذج الإجازة
     Fix permissions and default values for Leave Application link fields
@@ -977,6 +1014,8 @@ def fix_leave_application_link_permissions():
 
 
 def set_employee_link_fields_to_show_employee_name():
+    # AR: ضبط حقول الربط لعرض اسم الموظف بدل المعرّف.
+    # EN: Configure Employee links to display employee names.
     """
     إظهار اسم الموظف داخل حقول Employee Link
     مع حفظ رقم الموظف داخلياً.
@@ -998,7 +1037,6 @@ def set_employee_link_fields_to_show_employee_name():
         update_modified=False,
     )
 
-    frappe.db.commit()
     frappe.clear_cache(doctype="Employee")
     frappe.clear_cache(doctype=LEAVE_APPLICATION_DOCTYPE)
     frappe.clear_cache()
@@ -1008,6 +1046,8 @@ def set_employee_link_fields_to_show_employee_name():
 # ==========================================
 
 def get_system_manager_workflow_transitions():
+    # AR: إرجاع انتقالات سير العمل المخصصة لمدير النظام.
+    # EN: Return workflow transitions reserved for System Manager.
     """
     انتقالات سير العمل الخاصة بمدير النظام
     Extra workflow transitions for System Manager
@@ -1065,6 +1105,8 @@ def get_hr_manager_override_transitions():
 
 
 def create_leave_application_workflow():
+    # AR: إنشاء أو تحديث سير عمل طلب الإجازة.
+    # EN: Create or update the Leave Application workflow.
     """
     إنشاء سير العمل لطلب الإجازة
     Create Workflow for Leave Application
@@ -1107,7 +1149,7 @@ def create_leave_application_workflow():
         {"state": STATE_DRAFT, "action": ACTION_SEND_TO_SUBSTITUTE, "next_state": STATE_WAITING_SUBSTITUTE, "allowed": EMPLOYEE_ROLE, "condition": "doc.custom_substitute_user and doc.custom_direct_manager_user"},
         {"state": STATE_DRAFT, "action": ACTION_SEND_TO_DIRECT_MANAGER, "next_state": STATE_WAITING_DIRECT_MANAGER, "allowed": EMPLOYEE_ROLE, "condition": "doc.custom_direct_manager_user and not doc.custom_substitute_user"},
         {"state": STATE_WAITING_SUBSTITUTE, "action": ACTION_SUBSTITUTE_APPROVE, "next_state": STATE_WAITING_DIRECT_MANAGER, "allowed": ALL_ROLE, "condition": "doc.custom_substitute_user == frappe.session.user"},
-        {"state": STATE_WAITING_SUBSTITUTE, "action": ACTION_REJECT, "next_state": STATE_REJECTED, "allowed": ALL_ROLE, "condition": "doc.custom_substitute_user == frappe.session.user"},
+        {"state": STATE_WAITING_SUBSTITUTE, "action": ACTION_REJECT, "next_state": STATE_DRAFT, "allowed": ALL_ROLE, "condition": "doc.custom_substitute_user == frappe.session.user"},
         {"state": STATE_WAITING_SUBSTITUTE, "action": ACTION_DIRECT_MANAGER_APPROVE, "next_state": STATE_WAITING_HR_MANAGER, "allowed": ALL_ROLE, "condition": "doc.custom_direct_manager_user == frappe.session.user"},
         {"state": STATE_WAITING_SUBSTITUTE, "action": ACTION_REJECT, "next_state": STATE_REJECTED, "allowed": ALL_ROLE, "condition": "doc.custom_direct_manager_user == frappe.session.user"},
         {"state": STATE_WAITING_DIRECT_MANAGER, "action": ACTION_DIRECT_MANAGER_APPROVE, "next_state": STATE_WAITING_HR_MANAGER, "allowed": ALL_ROLE, "condition": "doc.custom_direct_manager_user == frappe.session.user"},
@@ -1160,6 +1202,8 @@ def create_leave_application_workflow():
 
 
 def create_leave_workflow_actions():
+    # AR: إنشاء إجراءات سير عمل الإجازة المطلوبة.
+    # EN: Create required leave workflow actions.
     """
     إنشاء إجراءات سير العمل
     Create workflow actions
@@ -1177,6 +1221,8 @@ def create_leave_workflow_actions():
 
 
 def create_leave_workflow_states():
+    # AR: إنشاء حالات سير عمل الإجازة المطلوبة.
+    # EN: Create required leave workflow states.
     """
     إنشاء حالات سير العمل
     Create workflow states
@@ -1193,6 +1239,8 @@ def create_leave_workflow_states():
 
 
 def get_workflow_state_style(state):
+    # AR: تحديد لون ونمط حالة سير العمل.
+    # EN: Return the color style for a workflow state.
     """
     تحديد لون حالة سير العمل
     Determine Workflow State Style (Color)
@@ -1204,6 +1252,8 @@ def get_workflow_state_style(state):
 
 
 def deactivate_other_leave_workflows(active_workflow_name):
+    # AR: تعطيل مسارات الإجازة الأخرى المتعارضة.
+    # EN: Deactivate conflicting Leave Application workflows.
     """
     إلغاء تنشيط أي سير عمل آخر للإجازات
     Deactivate other Leave Workflows
@@ -1219,6 +1269,8 @@ def deactivate_other_leave_workflows(active_workflow_name):
 # ==========================================
 
 def delete_custom_fields(custom_fields: dict):
+    # AR: حذف الحقول المخصصة المحددة عند إزالة التطبيق.
+    # EN: Delete selected custom fields during uninstall.
     """
     حذف الحقول المخصصة
     Delete custom fields
@@ -1232,6 +1284,8 @@ def delete_custom_fields(custom_fields: dict):
 
 
 def delete_leave_application_workflow():
+    # AR: حذف سير عمل طلب الإجازة التابع للتطبيق.
+    # EN: Delete the app-owned Leave Application workflow.
     """
     حذف سير عمل الإجازات
     Delete Leave Application workflow
@@ -1245,6 +1299,8 @@ def delete_leave_application_workflow():
         frappe.delete_doc("Workflow", workflow_name, ignore_permissions=True, force=True)
 
 def create_employee_name_display_fields():
+    # AR: إنشاء حقول أسماء الموظفين المستخدمة للعرض.
+    # EN: Create Employee-name fields used for display.
     """
     دوال غير مستخدمة حالياً، تم الاحتفاظ بها للتوافقية
     Unused functions kept for backwards compatibility
@@ -1252,6 +1308,8 @@ def create_employee_name_display_fields():
     pass
 
 def remove_extra_employee_name_display_fields():
+    # AR: إزالة حقول أسماء العرض القديمة أو الزائدة.
+    # EN: Remove obsolete Employee-name display fields.
     """
     دوال غير مستخدمة حالياً، تم الاحتفاظ بها للتوافقية
     Unused functions kept for backwards compatibility
@@ -1370,7 +1428,6 @@ def restore_original_leave_ui_keep_workflow():
     # EN: Rebuild the workflow with the required changes, without touching permissions code.
     create_leave_application_workflow()
 
-    frappe.db.commit()
     frappe.clear_cache(doctype=LEAVE_APPLICATION_DOCTYPE)
     frappe.clear_cache()
 

@@ -16,10 +16,12 @@
 console.log("masar_requests partial leave JS loaded");
 
 frappe.ui.form.on("Leave Application", {
+    // AR: تهيئة استعلامات وقواعد النموذج عند إنشائه.
+    // EN: Initialize form queries and rules when the form is created.
     setup(frm) {
-        // AR: تسجيل استعلام مخصص لحقل الموظف البديل عند تهيئة النموذج.
+        // AR: إعادة تطبيق قواعد العرض والحماية عند تحديث الواجهة.
         //     الاستعلام يعرض موظفي نفس إدارة مقدم الطلب فقط.
-        // EN: Register a custom query for the substitute employee field when
+        // EN: Reapply display and protection rules when the UI refreshes.
         //     the form is initialized. The query returns employees from the
         //     applicant's department only.
         masar_requests_set_substitute_employee_query(frm);
@@ -31,16 +33,22 @@ frappe.ui.form.on("Leave Application", {
 
         masar_requests_partial_leave_setup(frm);
         masar_requests_schedule_precise_leave_balance(frm);
+        masar_requests_leave_apply_hr_user_read_only(frm);
     },
 
+    // AR: تهيئة الواجهة والحسابات عند تحميل المستند.
+    // EN: Initialize UI state and calculations when the document loads.
     onload(frm) {
         masar_requests_inject_leave_application_styles();
         masar_requests_decorate_leave_application_form(frm);
 
         masar_requests_partial_leave_setup(frm);
         masar_requests_schedule_precise_leave_balance(frm);
+        masar_requests_leave_apply_hr_user_read_only(frm);
     },
 
+    // AR: تحديث بيانات الإجازة والبديل عند تغيير الموظف.
+    // EN: Refresh leave and substitute data when the Employee changes.
     employee(frm) {
         // AR: عند تغيير الموظف مقدم الطلب، يجب مسح الموظف البديل السابق؛
         //     لأن البديل القديم قد يكون تابعًا لإدارة مختلفة.
@@ -61,6 +69,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: إعادة حساب الرصيد عند تغيير نوع الإجازة.
+    // EN: Recalculate balance when the Leave Type changes.
     leave_type(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -68,6 +78,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تحديث تاريخ الإجازة الجزئية عند تغيير تاريخ البداية.
+    // EN: Update the partial-leave date when From Date changes.
     from_date(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -79,6 +91,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: توحيد تاريخي الطلب عند تغيير تاريخ النهاية.
+    // EN: Normalize request dates when To Date changes.
     to_date(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -90,6 +104,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: إعادة حساب الإجازة عند تغيير تاريخها الجزئي.
+    // EN: Recalculate partial leave when its date changes.
     custom_partial_leave_date(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -99,6 +115,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تحديث وقت البداية الداخلي والحسابات المباشرة.
+    // EN: Update internal start time and live calculations.
     custom_partial_from_time_ar(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -108,6 +126,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تحديث وقت النهاية الداخلي والحسابات المباشرة.
+    // EN: Update internal end time and live calculations.
     custom_partial_to_time_ar(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -117,6 +137,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تفعيل خيار نصف يوم وإلغاء الخيارات الجزئية الأخرى.
+    // EN: Enable Half Day and clear other partial-leave options.
     half_day(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -142,6 +164,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تفعيل خيار ربع يوم وإلغاء الخيارات الجزئية الأخرى.
+    // EN: Enable Quarter Day and clear other partial-leave options.
     quarter_day(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -168,6 +192,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تفعيل الإجازة بالساعات وإلغاء الخيارات الجزئية الأخرى.
+    // EN: Enable Hourly Leave and clear other partial options.
     is_hourly(frm) {
         if (!masar_requests_can_update_partial_leave_values(frm)) return;
 
@@ -196,10 +222,14 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_schedule_precise_leave_balance(frm);
     },
 
+    // AR: تحديث الرصيد المتبقي عند تغير عدد أيام الإجازة.
+    // EN: Update the remaining balance when total days change.
     total_leave_days(frm) {
         masar_requests_update_balance_after_request_local(frm);
     },
 
+    // AR: التحقق من مدخلات الإجازة الجزئية قبل الحفظ.
+    // EN: Validate partial-leave inputs before saving.
     validate(frm) {
         masar_requests_validate_partial_leave_client(frm);
     }
@@ -207,8 +237,8 @@ frappe.ui.form.on("Leave Application", {
 
 
 // ============================================================================
-// AR: فلترة الموظف البديل حسب إدارة مقدم طلب الإجازة.
-// EN: Filter the substitute employee by the leave applicant's department.
+// AR: ربط حقل الموظف البديل باستعلام موظفي الإدارة نفسها.
+// EN: Bind the substitute field to the same-department Employee query.
 // ============================================================================
 
 function masar_requests_set_substitute_employee_query(frm) {
@@ -248,10 +278,24 @@ function masar_requests_set_substitute_employee_query(frm) {
 // Main UI
 // ======================================================
 
+// AR: ضبط ظهور وقراءة حقول الإجازة الجزئية.
+// EN: Configure visibility and read-only state for partial-leave fields.
 function masar_requests_partial_leave_setup(frm) {
     const is_half_day = cint(frm.doc.half_day);
     const is_hourly = cint(frm.doc.is_hourly);
     const is_partial = masar_requests_is_any_partial(frm);
+
+    // AR:
+    // إخفاء حقل المسؤول المباشر من واجهة طلب الإجازة فقط.
+    // يبقى الحقل موجودًا داخليًا لاستخدامه في الصلاحيات وسير العمل.
+    //
+    // EN:
+    // Hide the direct manager field from the Leave Application UI only.
+    // Keep the field internally for permissions and workflow processing.
+    if (masar_requests_has_field(frm, "custom_direct_manager_employee")) {
+        frm.set_df_property("custom_direct_manager_employee", "hidden", 1);
+        frm.toggle_display("custom_direct_manager_employee", false);
+    }
 
     masar_requests_hide_leave_application_dashboard(frm);
 
@@ -314,6 +358,8 @@ function masar_requests_partial_leave_setup(frm) {
 }
 
 
+// AR: التحقق في الواجهة من صحة خيارات وأوقات الإجازة الجزئية.
+// EN: Validate partial-leave options and times in the client.
 function masar_requests_validate_partial_leave_client(frm) {
     const selected =
         cint(frm.doc.half_day) +
@@ -368,6 +414,8 @@ function masar_requests_validate_partial_leave_client(frm) {
 }
 
 
+// AR: توحيد طلب الإجازة الجزئية على تاريخ واحد.
+// EN: Force a partial leave request to use one date.
 async function masar_requests_apply_partial_single_date(frm) {
     if (!masar_requests_can_update_partial_leave_values(frm)) return;
     if (!masar_requests_is_any_partial(frm)) return;
@@ -384,6 +432,8 @@ async function masar_requests_apply_partial_single_date(frm) {
 }
 
 
+// AR: تحويل الوقت المعروض إلى حقول الوقت الداخلية.
+// EN: Convert display times into internal time fields.
 function masar_requests_apply_display_time_to_internal_fields(frm) {
     if (!masar_requests_is_any_partial(frm)) return;
 
@@ -411,6 +461,8 @@ function masar_requests_apply_display_time_to_internal_fields(frm) {
 // Live UI Updates Before Save
 // ======================================================
 
+// AR: تحديث الساعات والأيام مباشرة أثناء إدخال الوقت.
+// EN: Update hours and day fraction while the user enters time.
 function masar_requests_update_time_fields_live(frm) {
     if (!masar_requests_can_update_partial_leave_values(frm)) return;
     if (!masar_requests_is_any_partial(frm)) return;
@@ -492,6 +544,8 @@ function masar_requests_update_time_fields_live(frm) {
 }
 
 
+// AR: حساب الفاصل الزمني المدخل للإجازة بالساعات.
+// EN: Calculate the currently entered hourly-leave interval.
 function masar_requests_get_live_hourly_interval(frm) {
     if (!frm.doc.custom_partial_from_time_ar || !frm.doc.custom_partial_to_time_ar) {
         return null;
@@ -522,6 +576,8 @@ function masar_requests_get_live_hourly_interval(frm) {
 }
 
 
+// AR: تحديث نص فترة الإجازة الظاهر للمستخدم.
+// EN: Update the displayed leave-period text.
 function masar_requests_set_display_text_direct(frm, text) {
     if (!masar_requests_has_field(frm, "custom_partial_time_ar_display")) return;
 
@@ -530,6 +586,8 @@ function masar_requests_set_display_text_direct(frm, text) {
 }
 
 
+// AR: تحديث قيمة حقل محسوب دون دورة حفظ إضافية.
+// EN: Update a calculated field without an extra save cycle.
 function masar_requests_set_calc_field_live(frm, fieldname, value) {
     if (!masar_requests_has_field(frm, fieldname)) return;
 
@@ -550,6 +608,8 @@ function masar_requests_set_calc_field_live(frm, fieldname, value) {
 // Preview and Calculations
 // ======================================================
 
+// AR: معاينة مدة الإجازة الجزئية والتحقق من وقوعها داخل الوردية.
+// EN: Preview partial duration and validate it against the shift.
 async function masar_requests_partial_leave_preview(frm) {
     if (!masar_requests_can_update_partial_leave_values(frm)) return;
     if (!frm.doc.employee || !frm.doc.custom_partial_leave_date) return;
@@ -704,6 +764,8 @@ async function masar_requests_partial_leave_preview(frm) {
 // Precise Leave Balance
 // ======================================================
 
+// AR: جلب رصيد الإجازة الدقيق من الخادم وعرضه.
+// EN: Fetch and display the precise server-side leave balance.
 async function masar_requests_update_precise_leave_balance(frm) {
     if (!frm || !frm.doc) return;
     if (!frm.doc.employee || !frm.doc.leave_type) return;
@@ -738,6 +800,8 @@ async function masar_requests_update_precise_leave_balance(frm) {
 }
 
 
+// AR: حساب الرصيد المتوقع بعد الطلب محليًا.
+// EN: Calculate projected balance after the request locally.
 function masar_requests_update_balance_after_request_local(frm) {
     if (!frm || !frm.doc) return;
     if (!masar_requests_has_field(frm, "custom_balance_after_this_request")) return;
@@ -751,6 +815,8 @@ function masar_requests_update_balance_after_request_local(frm) {
 }
 
 
+// AR: جدولة تحديث الرصيد لتجنب تكرار طلبات الخادم.
+// EN: Debounce balance updates to avoid duplicate server calls.
 function masar_requests_schedule_precise_leave_balance(frm) {
     if (!frm || !frm.doc) return;
 
@@ -779,6 +845,8 @@ function masar_requests_schedule_precise_leave_balance(frm) {
 // Shift Fetching
 // ======================================================
 
+// AR: جلب وردية الموظف في التاريخ المحدد.
+// EN: Fetch the Employee shift for the selected date.
 async function masar_requests_get_employee_shift(employee, date) {
     const assignments = await frappe.db.get_list("Shift Assignment", {
         filters: [
@@ -853,6 +921,8 @@ async function masar_requests_get_employee_shift(employee, date) {
 // Time Calculations
 // ======================================================
 
+// AR: حساب ساعات الإجازة الواقعة داخل الوردية.
+// EN: Calculate leave hours that fall inside the shift.
 function masar_requests_calculate_leave_hours_inside_shift(from_value, to_value, shift_start, shift_end) {
     const interval = masar_requests_get_hourly_interval_inside_shift(
         from_value,
@@ -869,6 +939,8 @@ function masar_requests_calculate_leave_hours_inside_shift(from_value, to_value,
 }
 
 
+// AR: تطبيع فترة الإجازة بالساعات داخل الوردية.
+// EN: Normalize the hourly-leave interval inside the shift.
 function masar_requests_get_hourly_interval_inside_shift(from_value, to_value, shift_start, shift_end) {
     const DAY = 24 * 60 * 60;
     const HALF_DAY = 12 * 60 * 60;
@@ -907,6 +979,8 @@ function masar_requests_get_hourly_interval_inside_shift(from_value, to_value, s
     };
 }
 
+// AR: التحقق من احتواء الوردية لفترة الإجازة كاملة.
+// EN: Check whether the shift contains the full leave interval.
 function masar_requests_interval_inside_shift(start, end, shift_start, shift_end) {
     const DAY = 24 * 60 * 60;
 
@@ -919,6 +993,8 @@ function masar_requests_interval_inside_shift(start, end, shift_start, shift_end
 }
 
 
+// AR: تحويل الوقت المعروض إلى ثوانٍ.
+// EN: Convert a displayed time to seconds.
 function masar_requests_display_time_to_seconds(value) {
     if (!value) return 0;
 
@@ -934,6 +1010,8 @@ function masar_requests_display_time_to_seconds(value) {
 }
 
 
+// AR: تحويل قيمة وقت قياسية إلى ثوانٍ.
+// EN: Convert a standard time value to seconds.
 function masar_requests_time_to_seconds(value) {
     if (!value) return 0;
 
@@ -949,6 +1027,8 @@ function masar_requests_time_to_seconds(value) {
 }
 
 
+// AR: تحويل الثواني إلى وقت بصيغة 24 ساعة.
+// EN: Convert seconds to 24-hour time.
 function masar_requests_seconds_to_time(seconds) {
     const DAY = 24 * 60 * 60;
 
@@ -966,6 +1046,8 @@ function masar_requests_seconds_to_time(seconds) {
 }
 
 
+// AR: تحويل الثواني إلى وقت مقروء بصيغة 12 ساعة.
+// EN: Convert seconds to readable 12-hour time.
 function masar_requests_seconds_to_display_time(seconds) {
     const DAY = 24 * 60 * 60;
 
@@ -991,6 +1073,8 @@ function masar_requests_seconds_to_display_time(seconds) {
 // UI Styling and Dashboard Hide
 // ======================================================
 
+// AR: إضافة أنماط واجهة طلب الإجازة مرة واحدة.
+// EN: Inject Leave Application UI styles once.
 function masar_requests_inject_leave_application_styles() {
     // UI styling and icons have been fully disabled as requested.
     // The interface will revert to the default ERPNext design.
@@ -998,6 +1082,8 @@ function masar_requests_inject_leave_application_styles() {
 }
 
 
+// AR: جلب الحاوية المرئية لنموذج طلب الإجازة.
+// EN: Return the visible Leave Application form wrapper.
 function masar_requests_get_form_wrapper(frm) {
     if (!frm || !frm.wrapper) return null;
 
@@ -1023,6 +1109,8 @@ function masar_requests_get_form_wrapper(frm) {
 }
 
 
+// AR: تطبيق تنسيق واجهة طلب الإجازة.
+// EN: Apply Leave Application form decoration.
 function masar_requests_decorate_leave_application_form(frm) {
     if (!frm || frm.doctype !== "Leave Application") return;
 
@@ -1044,6 +1132,8 @@ function masar_requests_decorate_leave_application_form(frm) {
 }
 
 
+// AR: إخفاء لوحة معلومات الإجازة القياسية.
+// EN: Hide the standard leave dashboard.
 function masar_requests_hide_leave_application_dashboard(frm) {
     if (!frm || !frm.doc || frm.doctype !== "Leave Application") return;
 
@@ -1053,6 +1143,8 @@ function masar_requests_hide_leave_application_dashboard(frm) {
         frm.refresh_field("leave_balance");
     }
 
+    // AR: تنفيذ إخفاء لوحة الإجازة فورًا وبعد اكتمال تحديث الواجهة.
+    // EN: Hide the leave dashboard immediately and after UI refreshes.
     const hide_dashboard = () => {
         if (frm.dashboard && frm.dashboard.wrapper) {
             frm.dashboard.wrapper.hide();
@@ -1082,6 +1174,8 @@ function masar_requests_hide_leave_application_dashboard(frm) {
 // Helpers
 // ======================================================
 
+// AR: التحقق من اختيار أي نوع إجازة جزئية.
+// EN: Check whether any partial-leave option is selected.
 function masar_requests_is_any_partial(frm) {
     return (
         cint(frm.doc.half_day) ||
@@ -1091,17 +1185,23 @@ function masar_requests_is_any_partial(frm) {
 }
 
 
+// AR: التحقق من اختيار ربع يوم أو إجازة بالساعات.
+// EN: Check whether Quarter Day or Hourly Leave is selected.
 function masar_requests_is_custom_partial(frm) {
     return cint(frm.doc.quarter_day) || cint(frm.doc.is_hourly);
 }
 
 
+// AR: التحقق من وجود حقل داخل النموذج.
+// EN: Check whether a field exists on the form.
 function masar_requests_has_field(frm, fieldname) {
     return frm.fields_dict && frm.fields_dict[fieldname];
 }
 
 
 
+// AR: التحقق من أن المستخدم مدير نظام كامل.
+// EN: Check whether the current user is a full administrator.
 function masar_requests_is_full_admin_user() {
     return (
         frappe.session.user === "Administrator" ||
@@ -1109,6 +1209,8 @@ function masar_requests_is_full_admin_user() {
     );
 }
 
+// AR: تحديد إمكانية المستخدم تعديل قيم الإجازة الجزئية.
+// EN: Determine whether the user may edit partial-leave values.
 function masar_requests_can_update_partial_leave_values(frm) {
     if (masar_requests_is_full_admin_user()) {
         return true;
@@ -1130,6 +1232,8 @@ function masar_requests_can_update_partial_leave_values(frm) {
 }
 
 
+// AR: تعيين قيمة الحقل فقط عندما تختلف عن قيمته الحالية.
+// EN: Set a field only when its value has changed.
 async function masar_requests_set_value_if_changed(frm, fieldname, value) {
     if (!masar_requests_has_field(frm, fieldname)) return;
 
@@ -1141,6 +1245,8 @@ async function masar_requests_set_value_if_changed(frm, fieldname, value) {
 }
 
 
+// AR: تعيين قيمة حقل عند وجوده.
+// EN: Set a field value when the field exists.
 function masar_requests_set_if_exists(frm, fieldname, value) {
     if (!masar_requests_has_field(frm, fieldname)) return;
 
@@ -1152,6 +1258,8 @@ function masar_requests_set_if_exists(frm, fieldname, value) {
 }
 
 
+// AR: إظهار أو إخفاء حقل عند وجوده.
+// EN: Show or hide a field when it exists.
 function masar_requests_toggle_if_exists(frm, fieldname, show) {
     if (masar_requests_has_field(frm, fieldname)) {
         frm.toggle_display(fieldname, show);
@@ -1186,6 +1294,8 @@ window.masar_requests_leave_debug = function () {
 // ======================================================
 
 frappe.ui.form.on("User", {
+    // AR: إعادة تطبيق قواعد العرض والحماية عند تحديث الواجهة.
+    // EN: Reapply display and protection rules when the UI refreshes.
     refresh(frm) {
         if (
             frappe.session.user === frm.doc.name &&
@@ -1216,3 +1326,58 @@ $(document).ready(function () {
         });
     });
 });
+
+
+// ============================================================================
+// AR: حماية طلبات الإجازة للآخرين مع استثناء الطلب الشخصي لمستخدم HR User.
+// EN: Protect others' leave requests while exempting an HR User's personal request.
+// ============================================================================
+function masar_requests_leave_is_hr_user_read_only() {
+    return (
+        frappe.user.has_role("HR User") &&
+        !frappe.user.has_role("HR Manager") &&
+        !frappe.user.has_role("System Manager") &&
+        frappe.session.user !== "Administrator"
+    );
+}
+
+function masar_requests_leave_is_personal_request(frm) {
+    // AR: الطلب الجديد أو المملوك للمستخدم يعد طلب إجازة شخصياً.
+    // EN: A new request or one owned by the current user is a personal leave request.
+    return Boolean(frm.is_new() || frm.doc.owner === frappe.session.user);
+}
+
+function masar_requests_leave_apply_hr_user_read_only(frm) {
+    // AR: تقفل طلبات الآخرين فقط، ويظل طلب المستخدم الشخصي قابلاً للتعامل الطبيعي.
+    // EN: Lock other users' requests only; keep the user's personal request fully functional.
+    if (
+        !masar_requests_leave_is_hr_user_read_only() ||
+        masar_requests_leave_is_personal_request(frm)
+    ) return;
+
+    Object.keys(frm.fields_dict).forEach((fieldname) => {
+        const fieldtype = frm.fields_dict[fieldname]?.df?.fieldtype;
+        if (!["Section Break", "Column Break", "Tab Break", "HTML", "Button"].includes(fieldtype)) {
+            frm.set_df_property(fieldname, "read_only", 1);
+        }
+    });
+
+    frm.disable_save();
+    window.setTimeout(() => {
+        frm.page.clear_primary_action();
+        frm.page.clear_secondary_action();
+        const actions = [
+            "Send to Substitute",
+            "Send to Direct Manager",
+            "Substitute Approve",
+            "Direct Manager Approve",
+            "Final Approve",
+            "Reject",
+        ];
+        frm.page.wrapper.find("button, a").each(function () {
+            const $item = $(this);
+            const label = ($item.attr("data-label") || $item.text() || "").trim();
+            if (actions.some((action) => label.includes(action))) $item.remove();
+        });
+    }, 0);
+}

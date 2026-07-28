@@ -2,6 +2,8 @@
 frappe.ui.form.on('Shift Type', {
     
     // AR: حدث يتفعل عند اختيار أو تغيير قائمة العطلات (Holiday List) / EN: Triggered when holiday list is selected or changed
+    // AR: إعادة بناء أوقات الوردية عند تغيير قائمة العطلات.
+    // EN: Rebuild shift times when Holiday List changes.
     holiday_list: function(frm) {
         // AR: التأكد من وجود قيمة في الحقل / EN: Ensure field has a value
         if (frm.doc.holiday_list) {
@@ -18,6 +20,8 @@ frappe.ui.form.on('Shift Type', {
 });
 
 // AR: دالة تعبئة جدول توقيتات المناوبة آلياً / EN: Function to auto-populate shift times table
+// AR: تعبئة جدول أوقات الوردية لأيام العمل.
+// EN: Populate shift-time rows for active working days.
 function populate_shift_table(frm, weekly_off) {
     // AR: مصفوفة تحتوي على كافة أيام الأسبوع باللغة الإنجليزية القياسية / EN: Array containing all days of the week in standard English
     const all_days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

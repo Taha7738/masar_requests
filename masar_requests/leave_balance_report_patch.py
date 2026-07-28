@@ -8,6 +8,8 @@ from frappe.utils import flt, getdate
 # AR: دالة معدلة لاستخراج رصيد الإجازات من دفتر الأستاذ (القيود) بدقة / EN: Modified function to extract leave balance accurately from ledger
 def get_leaves_for_period_from_ledger(employee, leave_type, from_date, to_date, skip_expired_leaves=True, *args, **kwargs):
     # AR: تحويل النصوص إلى كائنات تاريخ / EN: Convert strings to date objects
+    # AR: حساب رصيد الإجازة من قيود دفتر الأستاذ خلال فترة محددة.
+    # EN: Calculate leave balance from ledger entries for a date range.
     from_date = getdate(from_date)
     to_date = getdate(to_date)
     

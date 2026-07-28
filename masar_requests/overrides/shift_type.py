@@ -14,6 +14,8 @@ _original_get_employee_shift = None
 # AR: دالة لتوليد وتحديث أوقات الوردية ديناميكياً قبل حفظها / EN: Function to dynamically generate and update shift times before save
 def generate_shift_times(doc, method=None):
     # AR: إيقاف العملية إذا لم تكن هناك قائمة عطلات مرتبطة / EN: Halt process if no holiday list is linked
+    # AR: إنشاء جدول أوقات الوردية حسب أيام العمل.
+    # EN: Generate shift-time rows for active working days.
     if not doc.holiday_list: return
     
     # AR: جلب يوم الإجازة الأسبوعية من النظام / EN: Fetch the weekly off day from system
@@ -61,8 +63,8 @@ def _get_standard_shift_module():
 
 # AR: الدالة المخصصة لجلب وردية الموظف مع دعم أوقات اليوم المخصصة / EN: Custom function to fetch employee shift with custom day times support
 def custom_get_employee_shift(employee, date, *args, **kwargs):
-    # AR: استدعاء الدالة الأصلية لجلب بيانات الوردية الأساسية.
-    # EN: Call the preserved original function for basic shift details.
+    # AR: جلب وردية الموظف مع تطبيق وقت اليوم المخصص.
+    # EN: Return an Employee shift with per-day custom times.
     if not callable(_original_get_employee_shift):
         return None
 

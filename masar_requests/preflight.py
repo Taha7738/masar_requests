@@ -5,6 +5,8 @@ EN: Masar Requests production-readiness checks for a customer site.
 
 import frappe
 
+from masar_requests import hooks as app_hooks
+
 
 WORKFLOW_ROLES = (
     "Warehouse Manager",
@@ -14,8 +16,8 @@ WORKFLOW_ROLES = (
     "University President",
 )
 
-SHARING_SERVER_SCRIPT = (
-    "Auto Share MR with Direct Supervisor masar_requests"
+MATERIAL_REQUEST_ENGINE_HOOK = (
+    "masar_requests.material_request_engine.before_save_material_request"
 )
 
 
@@ -52,32 +54,25 @@ def run_preflight():
         "info": [],
     }
 
-    # AR: سكربت المشاركة مسؤول عن إظهار معاملات المواد للسكرتارية.
-    # EN: The sharing Server Script controls secretary visibility.
-    if not frappe.db.exists("Server Script", SHARING_SERVER_SCRIPT):
+    # AR: التحقق من محرك Python الأصلي بدل Server Script القديم المحذوف.
+    # EN: Validate the native Python engine instead of the removed Server Script.
+    before_save_hook = (
+        app_hooks.doc_events.get("Material Request", {}).get("before_save")
+    )
+    if before_save_hook != MATERIAL_REQUEST_ENGINE_HOOK:
         result["errors"].append(
-            "Material Request sharing Server Script is missing. "
-            "Run setup_material_request_all() once."
+            "Material Request native before_save engine is not registered in hooks.py."
         )
-    else:
-        script_meta = frappe.get_meta("Server Script")
-        if script_meta.has_field("disabled"):
-            disabled = frappe.db.get_value(
-                "Server Script",
-                SHARING_SERVER_SCRIPT,
-                "disabled",
-            )
-            if disabled:
-                result["errors"].append(
-                    "Material Request sharing Server Script is disabled."
-                )
 
-    # AR: يجب ألا تكون Server Scripts معطلة من إعدادات الموقع.
-    # EN: Server Scripts must not be disabled in site configuration.
-    if frappe.conf.get("server_script_enabled") in (0, "0", False):
-        result["errors"].append(
-            "server_script_enabled is disabled in the site configuration."
-        )
+    legacy_scripts = (
+        "Auto Share MR with Direct Supervisor masar_requests",
+        "Warehouse Fission Engine masar_requests",
+    )
+    for script_name in legacy_scripts:
+        if frappe.db.exists("Server Script", script_name):
+            result["warnings"].append(
+                f"Legacy Server Script still exists and should be removed: {script_name}."
+            )
 
     # AR: التحقق من وجود مستخدم مفعل لكل مرحلة اعتماد.
     # EN: Ensure every approval stage has at least one enabled User.
@@ -166,4 +161,3 @@ def run_preflight():
 
     result["ready"] = not result["errors"]
     return result
-

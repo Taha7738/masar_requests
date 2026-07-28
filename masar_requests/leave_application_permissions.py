@@ -7,6 +7,20 @@ import frappe
 from frappe import _
 from frappe import share as frappe_share
 
+from masar_requests.constants import (
+    LEAVE_ACTION_DIRECT_MANAGER_APPROVE as ACTION_DIRECT_MANAGER_APPROVE,
+    LEAVE_ACTION_FINAL_APPROVE as ACTION_FINAL_APPROVE,
+    LEAVE_ACTION_REJECT as ACTION_REJECT,
+    LEAVE_ACTION_SUBSTITUTE_APPROVE as ACTION_SUBSTITUTE_APPROVE,
+    LEAVE_STATE_APPROVED as STATE_APPROVED,
+    LEAVE_STATE_DRAFT as STATE_DRAFT,
+    LEAVE_STATE_REJECTED as STATE_REJECTED,
+    LEAVE_STATE_WAITING_DIRECT_MANAGER as STATE_WAITING_DIRECT_MANAGER,
+    LEAVE_STATE_WAITING_HR_MANAGER as STATE_WAITING_HR_MANAGER,
+    LEAVE_STATE_WAITING_SUBSTITUTE as STATE_WAITING_SUBSTITUTE,
+)
+from masar_requests.hr_user_read_only import is_hr_user_read_only
+
 
 # ======================================================================
 # AR: أسماء الحقول المخصصة في طلب الإجازة
@@ -33,12 +47,7 @@ DIRECT_MANAGER_SECRETARY_USER_FIELD = "custom_direct_manager_secretary_user"
 # EN: Workflow states - must exactly match the Workflow configuration
 # ======================================================================
 
-STATE_DRAFT = "Draft"
-STATE_WAITING_SUBSTITUTE = "Waiting for Substitute Approval"
-STATE_WAITING_DIRECT_MANAGER = "Waiting for Direct Manager Approval"
-STATE_WAITING_HR_MANAGER = "Waiting for HR Manager Approval"
-STATE_APPROVED = "Approved"
-STATE_REJECTED = "Rejected"
+# AR: الحالات مستوردة من constants.py / EN: States are imported from constants.py.
 
 
 # ======================================================================
@@ -57,10 +66,7 @@ APPROVAL_BYPASSED = "Bypassed"
 # EN: Workflow action names
 # ======================================================================
 
-ACTION_SUBSTITUTE_APPROVE = "Substitute Approve"
-ACTION_DIRECT_MANAGER_APPROVE = "Direct Manager Approve"
-ACTION_FINAL_APPROVE = "Final Approve"
-ACTION_REJECT = "Reject"
+# AR: الإجراءات مستوردة من constants.py / EN: Actions are imported from constants.py.
 
 
 # ======================================================================
@@ -98,6 +104,8 @@ PERMISSION_SNAPSHOT_FIELDS = [
 # ======================================================================
 
 def is_full_admin_user(user=None):
+    # AR: التحقق من أن المستخدم هو Administrator أو يحمل دور مدير النظام.
+    # EN: Check whether the user is Administrator or has the System Manager role.
     user = user or frappe.session.user
 
     if user in ADMIN_USERS:
@@ -115,6 +123,8 @@ def is_full_admin_user(user=None):
 # ======================================================================
 
 def is_hr_manager_user(user=None):
+    # AR: التحقق من أن المستخدم يحمل دور مدير الموارد البشرية.
+    # EN: Check whether the user has the HR Manager role.
     user = user or frappe.session.user
 
     try:
@@ -129,8 +139,49 @@ def is_hr_manager_user(user=None):
 # ======================================================================
 
 def is_unrestricted_leave_user(user=None):
+    # AR: التحقق من امتلاك المستخدم وصولًا غير مقيد إلى طلبات الإجازة.
+    # EN: Check whether the user has unrestricted Leave Application access.
     user = user or frappe.session.user
     return is_full_admin_user(user) or is_hr_manager_user(user)
+
+
+# Allow direct manager to view employee leave balance
+# السماح للمدير المباشر برؤية رصيد إجازة الموظف
+
+def can_access_employee_leave_data(employee, user=None):
+    user = user or frappe.session.user
+
+    # Employee himself
+    # الموظف نفسه
+    if frappe.db.get_value("Employee", employee, "user_id") == user:
+        return True
+
+    # HR / System administrators
+    # مسؤولو النظام والموارد البشرية
+    roles = frappe.get_roles(user)
+
+    if "HR Manager" in roles or "System Manager" in roles:
+        return True
+
+    # Direct manager through reports_to
+    # المدير المباشر عن طريق reports_to
+    employee_manager = frappe.db.get_value(
+        "Employee",
+        employee,
+        "reports_to"
+    )
+
+    if employee_manager:
+        manager_user = frappe.db.get_value(
+            "Employee",
+            employee_manager,
+            "user_id"
+        )
+
+        if manager_user == user:
+            return True
+
+    return False
 
 
 # ======================================================================
@@ -139,6 +190,8 @@ def is_unrestricted_leave_user(user=None):
 # ======================================================================
 
 def _employee_user(employee):
+    # AR: جلب حساب المستخدم المرتبط بسجل الموظف.
+    # EN: Return the User account linked to an Employee.
     if not employee:
         return None
 
@@ -151,6 +204,8 @@ def _employee_user(employee):
 # ======================================================================
 
 def _employee_direct_manager_user(employee):
+    # AR: جلب حساب المدير المباشر للموظف من حقل reports_to.
+    # EN: Return the direct manager User resolved through reports_to.
     if not employee:
         return None
 
@@ -176,6 +231,8 @@ def _employee_direct_manager_user(employee):
 # ======================================================================
 
 def _employee_own_secretary_user(employee):
+    # AR: جلب حساب السكرتير المرتبط بالموظف.
+    # EN: Return the secretary User linked to an Employee.
     if not employee:
         return None
 
@@ -201,6 +258,8 @@ def _employee_own_secretary_user(employee):
 # ======================================================================
 
 def _permission_snapshot(doc):
+    # AR: جلب النسخة المحفوظة من المستند لاستخدامها في فحص الصلاحيات.
+    # EN: Load the saved document snapshot for permission checks.
     before_save = getattr(doc, "_doc_before_save", None)
 
     if before_save:
@@ -227,6 +286,8 @@ def _permission_snapshot(doc):
 # ======================================================================
 
 def _relation_flags(doc, user):
+    # AR: تحديد علاقة المستخدم بطلب الإجازة الحالي.
+    # EN: Determine how the user is related to the current leave request.
     applicant_user = _employee_user(doc.get("employee"))
 
     manager_user = _employee_direct_manager_user(
@@ -262,6 +323,8 @@ def _relation_flags(doc, user):
 # ======================================================================
 
 def _is_secretary_only(doc, user):
+    # AR: التحقق من أن المستخدم سكرتير فقط ولا يملك دورًا آخر في الطلب.
+    # EN: Check whether the user is only a secretary for this request.
     relation = _relation_flags(doc, user)
 
     return bool(
@@ -278,8 +341,8 @@ def _is_secretary_only(doc, user):
 # ======================================================================
 
 def _can_write_leave(doc, user):
-    # AR: HR وSystem Manager لديهما صلاحية كاملة.
-    # EN: HR and System Manager have full permission.
+    # AR: تحديد إمكانية تعديل طلب الإجازة حسب المستخدم ومرحلة سير العمل.
+    # EN: Determine write access from the user relation and workflow state.
     if is_unrestricted_leave_user(user):
         return True
 
@@ -332,6 +395,12 @@ def get_same_department_substitute_employees(
     if not employee:
         return []
 
+    if not can_access_employee_leave_data(employee):
+        frappe.throw(
+            _("You are not allowed to search substitutes for this employee."),
+            frappe.PermissionError,
+        )
+
     applicant = frappe.db.get_value(
         "Employee",
         employee,
@@ -380,8 +449,21 @@ def get_same_department_substitute_employees(
 # ======================================================================
 
 def validate_leave_application(doc, method=None):
+    # AR: التحقق من صلاحيات وبيانات طلب الإجازة قبل الحفظ.
+    # EN: Validate leave permissions and participant data before saving.
     user = frappe.session.user
     stored_doc = _permission_snapshot(doc)
+
+    # AR: HR User للعرض والطباعة في طلبات الآخرين، ويعامل كموظف في طلبه الشخصي.
+    # EN: HR User is read/print-only for others, and acts as an employee on a personal request.
+    if is_hr_user_read_only(user) and not _relation_flags(stored_doc, user).applicant:
+        frappe.throw(
+            _(
+                "HR User is allowed to view and print other employees' requests only. "
+                "You may create and process your own request according to the normal workflow."
+            ),
+            frappe.PermissionError,
+        )
 
     # AR: السكرتير فقط يستطيع العرض والطباعة ولا يستطيع التعديل.
     # EN: Secretary-only user can view and print but cannot modify.
@@ -409,6 +491,8 @@ def validate_leave_application(doc, method=None):
 # ======================================================================
 
 def set_substitute_user(doc):
+    # AR: تعبئة بيانات المستخدم والاسم للموظف البديل والتحقق منها.
+    # EN: Resolve and validate the substitute Employee and User data.
     substitute_employee = doc.get(SUBSTITUTE_EMPLOYEE_FIELD)
 
     if not substitute_employee:
@@ -489,6 +573,8 @@ def set_substitute_user(doc):
 # ======================================================================
 
 def set_direct_manager_from_reports_to(doc):
+    # AR: تعبئة بيانات المدير المباشر وسكرتيره اعتمادًا على reports_to.
+    # EN: Resolve the direct manager and secretary through reports_to.
     if not doc.get("employee"):
         return
 
@@ -569,7 +655,11 @@ def set_direct_manager_from_reports_to(doc):
 # ======================================================================
 
 def sync_leave_application_display_names(doc):
+    # AR: مزامنة أسماء الأطراف الظاهرة داخل طلب الإجازة.
+    # EN: Synchronize participant display names on the leave request.
     def set_if_field(fieldname, value):
+        # AR: تعيين قيمة الحقل عند وجوده في نموذج طلب الإجازة.
+        # EN: Set a field value only when the field exists.
         if doc.meta.has_field(fieldname):
             doc.set(fieldname, value)
 
@@ -632,6 +722,8 @@ def sync_leave_application_display_names(doc):
 # ======================================================================
 
 def _get_previous_workflow_state(doc):
+    # AR: جلب حالة سير العمل السابقة للمستند.
+    # EN: Return the document workflow state before the update.
     before_save = getattr(doc, "_doc_before_save", None)
 
     if before_save:
@@ -653,6 +745,8 @@ def _get_previous_workflow_state(doc):
 # ======================================================================
 
 def _get_previous_approval_values(doc):
+    # AR: جلب قيم الاعتماد السابقة قبل تحديث الطلب.
+    # EN: Return approval values stored before the update.
     before_save = getattr(doc, "_doc_before_save", None)
 
     if before_save:
@@ -687,6 +781,8 @@ def _get_previous_approval_values(doc):
 # ======================================================================
 
 def _approval_or_fallback(value, fallback):
+    # AR: إرجاع قيمة الاعتماد أو استخدام القيمة البديلة عند غيابها.
+    # EN: Return an approval value or its fallback.
     valid_values = {
         APPROVAL_PENDING,
         APPROVAL_APPROVED,
@@ -703,6 +799,8 @@ def _approval_or_fallback(value, fallback):
 # ======================================================================
 
 def sync_approval_status_fields(doc):
+    # AR: مزامنة حقول حالات الاعتماد مع انتقالات سير العمل.
+    # EN: Synchronize approval status fields with workflow transitions.
     state = doc.get("workflow_state") or STATE_DRAFT
     previous_state = _get_previous_workflow_state(doc)
     previous_values = _get_previous_approval_values(doc)
@@ -720,6 +818,28 @@ def sync_approval_status_fields(doc):
     is_hr_or_system_actor = is_unrestricted_leave_user(
         current_user
     )
+
+    # AR:
+    # رفض الموظف البديل يعيد الطلب إلى الموظف لاختيار بديل جديد أو الإرسال
+    # مباشرة إلى المسؤول المباشر. لا يتحول الطلب إلى رفض نهائي.
+    #
+    # EN:
+    # Substitute rejection returns the request to the applicant for selecting
+    # another substitute or routing directly to the manager; it is not final rejection.
+    substitute_return = bool(
+        previous_state == STATE_WAITING_SUBSTITUTE
+        and state == STATE_DRAFT
+        and is_substitute_actor
+        and not is_hr_or_system_actor
+    )
+    if substitute_return:
+        doc.set(SUBSTITUTE_APPROVAL_FIELD, APPROVAL_REJECTED)
+        doc.set(DIRECT_MANAGER_APPROVAL_FIELD, APPROVAL_PENDING)
+        doc.set(SUBSTITUTE_EMPLOYEE_FIELD, None)
+        doc.set(SUBSTITUTE_USER_FIELD, None)
+        if doc.meta.has_field(SUBSTITUTE_EMPLOYEE_NAME_FIELD):
+            doc.set(SUBSTITUTE_EMPLOYEE_NAME_FIELD, None)
+        return
 
     # AR: لا توجد موافقات منفذة في المسودة أو انتظار البديل.
     # EN: No approvals are completed in Draft or substitute waiting stage.
@@ -899,6 +1019,8 @@ def sync_approval_status_fields(doc):
 # ======================================================================
 
 def on_update_leave_application(doc, method=None):
+    # AR: مزامنة المشاركات وإرسال الإشعارات بعد تحديث طلب الإجازة.
+    # EN: Synchronize shares and send notifications after an update.
     sync_leave_application_shares(doc)
     send_leave_workflow_notifications(doc)
 
@@ -909,6 +1031,7 @@ def on_update_leave_application(doc, method=None):
 # ======================================================================
 
 def _grant_docshare(doc, user, write=0):
+    # AR: منح مستخدم محدد مشاركة على طلب الإجازة بصلاحية مناسبة.
     if (
         not user
         or user == "Administrator"
@@ -916,16 +1039,25 @@ def _grant_docshare(doc, user, write=0):
     ):
         return
 
-    frappe_share.add_docshare(
-        doc.doctype,
-        doc.name,
-        user,
-        read=1,
-        write=1 if write else 0,
-        submit=0,
-        share=0,
-        flags={"ignore_share_permission": True},
+    existing_share = frappe.db.get_value(
+        "DocShare",
+        {"share_doctype": doc.doctype, "share_name": doc.name, "user": user},
+        "name"
     )
+
+    if existing_share:
+        frappe.db.set_value("DocShare", existing_share, {"read": 1, "write": 1 if write else 0}, update_modified=False)
+    else:
+        share = frappe.new_doc("DocShare")
+        share.share_doctype = doc.doctype
+        share.share_name = doc.name
+        share.user = user
+        share.read = 1
+        share.write = 1 if write else 0
+        share.submit = 0
+        share.share = 0
+        share.flags.ignore_share_permission = True
+        share.insert(ignore_permissions=True)
 
 
 # ======================================================================
@@ -934,6 +1066,7 @@ def _grant_docshare(doc, user, write=0):
 # ======================================================================
 
 def _grant_employee_docshare(employee, user):
+    # AR: منح قراءة فقط لسجل موظف مرتبط بطلب الإجازة.
     if (
         not employee
         or not user
@@ -943,16 +1076,25 @@ def _grant_employee_docshare(employee, user):
     ):
         return
 
-    frappe_share.add_docshare(
-        "Employee",
-        employee,
-        user,
-        read=1,
-        write=0,
-        submit=0,
-        share=0,
-        flags={"ignore_share_permission": True},
+    existing_share = frappe.db.get_value(
+        "DocShare",
+        {"share_doctype": "Employee", "share_name": employee, "user": user},
+        "name"
     )
+
+    if existing_share:
+        frappe.db.set_value("DocShare", existing_share, {"read": 1, "write": 0}, update_modified=False)
+    else:
+        share = frappe.new_doc("DocShare")
+        share.share_doctype = "Employee"
+        share.share_name = employee
+        share.user = user
+        share.read = 1
+        share.write = 0
+        share.submit = 0
+        share.share = 0
+        share.flags.ignore_share_permission = True
+        share.insert(ignore_permissions=True)
 
 
 # ======================================================================
@@ -961,10 +1103,12 @@ def _grant_employee_docshare(employee, user):
 # ======================================================================
 
 def sync_leave_application_shares(doc, method=None):
+    # AR: مزامنة مشاركات طلب الإجازة مع جميع الأطراف المرتبطة.
+    # EN: Synchronize Leave Application shares for all participants.
     permissions = {}
 
-    # AR: حفظ أقوى صلاحية لكل مستخدم.
-    # EN: Keep the strongest permission for each user.
+    # AR: حفظ أقوى صلاحية مطلوبة لكل مستخدم ضمن عملية المزامنة.
+    # EN: Keep the strongest required permission for each user.
     def grant(user, write):
         if not user:
             return
@@ -1004,6 +1148,28 @@ def sync_leave_application_shares(doc, method=None):
     related_employees.discard(None)
     related_employees.discard("")
 
+    # AR: إزالة مشاركة أي بديل قديم بعد رفضه أو استبداله.
+    # EN: Remove stale request shares after a substitute is rejected or replaced.
+    previous = doc.get_doc_before_save()
+    if previous:
+        previous_users = {
+            _employee_user(previous.get("employee")),
+            previous.get(SUBSTITUTE_USER_FIELD),
+            previous.get(DIRECT_MANAGER_USER_FIELD),
+            previous.get(DIRECT_MANAGER_SECRETARY_USER_FIELD),
+        }
+        current_users = set(permissions)
+        for stale_user in previous_users - current_users:
+            if stale_user:
+                frappe.db.delete(
+                    "DocShare",
+                    {
+                        "share_doctype": doc.doctype,
+                        "share_name": doc.name,
+                        "user": stale_user,
+                    },
+                )
+
     # AR: مشاركة طلب الإجازة نفسه مع أطرافه.
     # EN: Share the Leave Application document with its participants.
     for user, can_write in permissions.items():
@@ -1026,68 +1192,133 @@ def sync_leave_application_shares(doc, method=None):
 # EN: Send notifications to users responsible for the current workflow stage
 # ======================================================================
 
+def _translate_leave_notification_for_user(target, source, *args):
+    """
+    AR:
+        ترجمة إشعار طلب الإجازة وفق لغة المستخدم المستهدف، وليس لغة منفذ
+        إجراء سير العمل الحالي.
+
+    EN:
+        Translate a Leave notification using the target user's language,
+        not the workflow actor's current session language.
+    """
+    language = (
+        frappe.get_cached_value("User", target, "language")
+        or getattr(frappe.local, "lang", None)
+        or "en"
+    )
+    return _(source, lang=language).format(*args)
+
+
 def send_leave_workflow_notifications(doc):
+    """
+    AR:
+        إرسال إشعارات المرحلة الحالية. عند انتظار البديل يصل الطلب أيضاً
+        للمسؤول المباشر ليعتمد فوراً أو ينتظر قرار البديل. رفض البديل يعيد
+        الطلب للموظف مع إشعار واضح لإعادة الاختيار.
+
+    EN:
+        Notify the current stage. While waiting for the substitute, the direct
+        manager is also notified and may approve immediately or wait. Substitute
+        rejection returns the request to the applicant for reselection.
+    """
     state = doc.get("workflow_state")
+    previous_state = _get_previous_workflow_state(doc)
 
     if not state or doc.docstatus >= 2:
         return
 
-    targets = set()
-    message = ""
+    messages_by_target = {}
 
-    if state == STATE_WAITING_SUBSTITUTE:
+    if (
+        state == STATE_DRAFT
+        and previous_state == STATE_WAITING_SUBSTITUTE
+        and doc.get(SUBSTITUTE_APPROVAL_FIELD) == APPROVAL_REJECTED
+    ):
+        targets = {doc.owner}
+        applicant_user = _employee_user(doc.get("employee"))
+        if applicant_user:
+            targets.add(applicant_user)
+
+        source = (
+            "↩️ Leave Request Returned: The substitute rejected request {0}. "
+            "Please select another substitute or send it directly to your manager."
+        )
+        for target in targets:
+            messages_by_target[target] = _translate_leave_notification_for_user(
+                target, source, doc.name
+            )
+
+    elif state == STATE_WAITING_SUBSTITUTE:
         substitute_user = doc.get(SUBSTITUTE_USER_FIELD)
+        manager_user = doc.get(DIRECT_MANAGER_USER_FIELD)
+        secretary_user = doc.get(DIRECT_MANAGER_SECRETARY_USER_FIELD)
 
         if substitute_user:
-            targets.add(substitute_user)
+            source = (
+                "⚠️ Leave Request Action Required: {0} has requested you as a substitute."
+            )
+            messages_by_target[substitute_user] = _translate_leave_notification_for_user(
+                substitute_user, source, doc.employee_name
+            )
 
-        message = (
-            f"⚠️ Leave Request Action Required: {doc.employee_name} "
-            "has requested you as a substitute."
+        manager_source = (
+            "⚠️ Leave Request Available: Request {0} from {1} is waiting for the substitute. "
+            "You may approve it now or wait for the substitute decision."
         )
+        for target in {manager_user, secretary_user}:
+            if target:
+                messages_by_target[target] = _translate_leave_notification_for_user(
+                    target, manager_source, doc.name, doc.employee_name
+                )
 
     elif state == STATE_WAITING_DIRECT_MANAGER:
-        targets.add(doc.get(DIRECT_MANAGER_USER_FIELD))
-        targets.add(
-            doc.get(DIRECT_MANAGER_SECRETARY_USER_FIELD)
+        source = (
+            "⚠️ Leave Request Action Required: New request from {0} is awaiting approval."
         )
-
-        message = (
-            f"⚠️ Leave Request Action Required: New request from "
-            f"{doc.employee_name} is awaiting approval."
-        )
+        for target in {
+            doc.get(DIRECT_MANAGER_USER_FIELD),
+            doc.get(DIRECT_MANAGER_SECRETARY_USER_FIELD),
+        }:
+            if target:
+                messages_by_target[target] = _translate_leave_notification_for_user(
+                    target, source, doc.employee_name
+                )
 
     elif state == STATE_WAITING_HR_MANAGER:
-        targets.update(get_users_with_role_safe("HR Manager"))
-
-        message = (
-            f"⚠️ Leave Request Action Required: Request from "
-            f"{doc.employee_name} reached HR."
+        source = (
+            "⚠️ Leave Request Action Required: Request from {0} reached HR."
         )
+        for target in get_users_with_role_safe("HR Manager"):
+            messages_by_target[target] = _translate_leave_notification_for_user(
+                target, source, doc.employee_name
+            )
 
     elif state == STATE_APPROVED:
-        targets.add(doc.owner)
-
-        message = (
-            f"✅ Leave Request Approved: Your leave application "
-            f"({doc.name}) has been fully approved."
+        target = doc.owner
+        source = (
+            "✅ Leave Request Approved: Your leave application ({0}) has been fully approved."
+        )
+        messages_by_target[target] = _translate_leave_notification_for_user(
+            target, source, doc.name
         )
 
     elif state == STATE_REJECTED:
-        targets.add(doc.owner)
-
-        message = (
-            f"❌ Leave Request Rejected: Your leave application "
-            f"({doc.name}) has been rejected."
+        target = doc.owner
+        source = (
+            "❌ Leave Request Rejected: Your leave application ({0}) has been rejected."
+        )
+        messages_by_target[target] = _translate_leave_notification_for_user(
+            target, source, doc.name
         )
 
-    targets.discard(None)
-    targets.discard("")
-    targets.discard("Administrator")
-    targets.discard(frappe.session.user)
-
-    for target in targets:
-        if frappe.db.exists("User", target):
+    for target, message in messages_by_target.items():
+        if (
+            target
+            and target != "Administrator"
+            and target != frappe.session.user
+            and frappe.db.exists("User", target)
+        ):
             frappe.get_doc(
                 {
                     "doctype": "Notification Log",
@@ -1106,6 +1337,8 @@ def send_leave_workflow_notifications(doc):
 # ======================================================================
 
 def remove_leave_application_shares(doc, method=None):
+    # AR: إزالة مشاركات طلب الإجازة عند حذف المستند.
+    # EN: Remove Leave Application shares when the document is deleted.
     pass
 
 
@@ -1115,6 +1348,8 @@ def remove_leave_application_shares(doc, method=None):
 # ======================================================================
 
 def resync_all_leave_application_shares():
+    # AR: إعادة مزامنة مشاركات جميع طلبات الإجازة الموجودة.
+    # EN: Re-synchronize shares for all existing leave requests.
     names = frappe.get_all(
         "Leave Application",
         pluck="name",
@@ -1135,6 +1370,8 @@ def resync_all_leave_application_shares():
 # ======================================================================
 
 def resync_all_leave_application_display_names():
+    # AR: إصلاح أسماء العرض لجميع طلبات الإجازة القديمة.
+    # EN: Repair display names on all existing leave requests.
     names = frappe.get_all(
         "Leave Application",
         pluck="name",
@@ -1174,6 +1411,8 @@ def resync_all_leave_application_display_names():
 # ======================================================================
 
 def _current_direct_manager_employee(employee):
+    # AR: جلب سجل المدير المباشر الحالي للموظف.
+    # EN: Return the current direct manager Employee.
     if not employee:
         return None
 
@@ -1190,6 +1429,8 @@ def _current_direct_manager_employee(employee):
 # ======================================================================
 
 def _readable_employee_name(employee):
+    # AR: جلب الاسم المقروء للموظف.
+    # EN: Return a readable Employee name.
     if not employee:
         return None
 
@@ -1206,11 +1447,18 @@ def _readable_employee_name(employee):
 # ======================================================================
 
 def _available_leave_actions(doc, user=None):
+    # AR: تحديد إجراءات سير العمل المتاحة للمستخدم الحالي.
+    # EN: Return workflow actions available to the current user.
     user = user or frappe.session.user
     state = doc.get("workflow_state") or STATE_DRAFT
     relation = _relation_flags(doc, user)
     applicant_user = _employee_user(doc.get("employee"))
     actions = []
+
+    # AR: لا تظهر إجراءات HR User على طلبات الآخرين؛ طلبه الشخصي يتبع دور Employee.
+    # EN: HR User gets no actions on others' requests; a personal request follows Employee rules.
+    if is_hr_user_read_only(user) and not relation.applicant:
+        return actions
 
     # AR: HR وSystem Manager يستطيعان الاعتماد النهائي أو الرفض
     # من جميع المراحل النشطة، بما فيها Draft.
@@ -1276,6 +1524,8 @@ def _available_leave_actions(doc, user=None):
 
 @frappe.whitelist()
 def get_leave_application_ui_context(docname):
+    # AR: إرجاع بيانات الأطراف والإجراءات اللازمة لواجهة طلب الإجازة.
+    # EN: Return participants and actions required by the form UI.
     doc = frappe.get_doc("Leave Application", docname)
     doc.check_permission("read")
 
@@ -1335,6 +1585,8 @@ def get_leave_application_ui_context(docname):
 
 @frappe.whitelist()
 def apply_masar_requests_leave_workflow_action(docname, action):
+    # AR: تنفيذ إجراء سير عمل طلب الإجازة بعد التحقق من الصلاحية.
+    # EN: Apply an authorized Leave Application workflow action.
     doc = frappe.get_doc("Leave Application", docname)
     doc.check_permission("read")
 
@@ -1359,6 +1611,10 @@ def apply_masar_requests_leave_workflow_action(docname, action):
 
 @frappe.whitelist()
 def repair_all_leave_application_display_data():
+    # AR: إصلاح بيانات العرض لجميع طلبات الإجازة كعملية إدارية.
+    # EN: Repair display data on every leave request as an admin task.
+    frappe.only_for("System Manager")
+
     names = frappe.get_all(
         "Leave Application",
         pluck="name",
@@ -1406,6 +1662,8 @@ def repair_all_leave_application_display_data():
 # ======================================================================
 
 def get_users_with_role_safe(role):
+    # AR: جلب المستخدمين المسند إليهم دور محدد.
+    # EN: Return users assigned to a specified role.
     return frappe.get_all(
         "Has Role",
         filters={"role": role},
@@ -1419,11 +1677,13 @@ def get_users_with_role_safe(role):
 # ======================================================================
 
 def leave_application_query(user=None):
+    # AR: إنشاء شرط يحدد طلبات الإجازة الظاهرة للمستخدم في القوائم.
+    # EN: Build the list query condition for visible leave requests.
     user = user or frappe.session.user
 
     # AR: HR وSystem Manager يشاهدون كل الطلبات.
     # EN: HR and System Manager can view all requests.
-    if is_unrestricted_leave_user(user):
+    if is_unrestricted_leave_user(user) or is_hr_user_read_only(user):
         return None
 
     escaped_user = frappe.db.escape(user)
@@ -1483,19 +1743,29 @@ def leave_application_has_permission(
     user=None,
     permission_type=None,
 ):
+    # AR: فحص صلاحية المستخدم على طلب إجازة محدد.
+    # EN: Check a user permission on one Leave Application.
     user = user or frappe.session.user
     permission_type = permission_type or ptype or "read"
+
+    # AR: فحص الإنشاء لا يملك مستندًا محفوظًا؛ تطبق صلاحيات الدور الطبيعية.
+    # EN: Create permission has no saved document; defer to normal role permissions.
+    if permission_type == "create":
+        return None
+
+    reference_doc = _permission_snapshot(doc)
+    relation = _relation_flags(reference_doc, user)
+
+    # AR: HR User يقرأ ويطبع طلبات الآخرين فقط، أما طلبه الشخصي فيعامل كموظف.
+    # EN: HR User is read/print-only for others; a personal request follows Employee permissions.
+    if is_hr_user_read_only(user) and not relation.applicant:
+        return permission_type in {"read", "print"}
 
     # AR: الموارد البشرية ومدير النظام لديهم صلاحية كاملة.
     # EN: HR and System Manager have full permissions.
     if is_unrestricted_leave_user(user):
         return True
 
-    if permission_type == "create":
-        return None
-
-    reference_doc = _permission_snapshot(doc)
-    relation = _relation_flags(reference_doc, user)
     is_related = any(relation.values())
 
     if permission_type in {"read", "print"}:
@@ -1537,6 +1807,8 @@ def employee_has_permission(
     user=None,
     permission_type=None,
 ):
+    # AR: دالة توافق قديمة لا تمنح صلاحية عامة على سجلات الموظفين.
+    # EN: Legacy compatibility function that grants no broad Employee access.
     return None
 
 
@@ -1546,8 +1818,12 @@ def employee_has_permission(
 # ======================================================================
 
 def sync_leave_employee_user_permissions(doc):
+    # AR: دالة توافق معطلة لمنع إنشاء صلاحيات مستخدم دائمة.
+    # EN: Disabled compatibility function for permanent User Permissions.
     return
 
 
 def add_employee_user_permission(user, employee):
+    # AR: دالة توافق معطلة لمنع إضافة صلاحية موظف دائمة.
+    # EN: Disabled compatibility function for permanent Employee permissions.
     return

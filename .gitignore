@@ -5,3 +5,7 @@
 tags
 node_modules
 __pycache__
+*.zip
+*.before_module_fix
+.coverage
+htmlcov/
