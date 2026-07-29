@@ -3,6 +3,7 @@ AR: اختبارات رجوع لسير العمل الموحد وصلاحية HR
 EN: Regression tests for the unified workflow and HR User read-only access.
 """
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
@@ -19,6 +20,9 @@ from masar_requests.constants import (
 from masar_requests.hr_user_read_only import (
     is_hr_user_read_only,
     material_request_has_permission,
+)
+from masar_requests.material_request_engine import (
+    allow_zero_valuation_for_internal_material_issue,
 )
 from masar_requests.setup_attendance_request import (
     get_attendance_custom_fields,
@@ -38,6 +42,62 @@ class TestUnifiedRequestWorkflow(FrappeTestCase):
             hooks.has_permission["Material Request"],
             "masar_requests.hr_user_read_only.material_request_has_permission",
         )
+
+    def test_stock_entry_zero_valuation_hook_is_registered(self):
+        # AR: حركة الصرف المرتبطة بطلب المواد تمر عبر الحماية المقيدة.
+        # EN: Linked material issues use the guarded zero-valuation hook.
+        self.assertIn("Stock Entry", hooks.doc_events)
+        self.assertEqual(
+            hooks.doc_events["Stock Entry"]["before_validate"],
+            "masar_requests.material_request_engine."
+            "allow_zero_valuation_for_internal_material_issue",
+        )
+
+    @patch("masar_requests.material_request_engine.frappe.db.get_value")
+    def test_zero_valuation_is_limited_to_linked_internal_issues(self, get_value):
+        # AR: التفعيل لا يشمل إلا سطر صرف مرتبط بطلب Material Issue.
+        # EN: Only a row linked to a Material Issue request is enabled.
+        get_value.return_value = "Material Issue"
+        linked_row = SimpleNamespace(
+            material_request="MAT-MR-TEST-0001",
+            allow_zero_valuation_rate=0,
+        )
+        unrelated_row = SimpleNamespace(
+            material_request=None,
+            allow_zero_valuation_rate=0,
+        )
+        doc = SimpleNamespace(
+            purpose="Material Issue",
+            items=[linked_row, unrelated_row],
+        )
+
+        allow_zero_valuation_for_internal_material_issue(doc)
+
+        self.assertEqual(linked_row.allow_zero_valuation_rate, 1)
+        self.assertEqual(unrelated_row.allow_zero_valuation_rate, 0)
+        get_value.assert_called_once_with(
+            "Material Request",
+            "MAT-MR-TEST-0001",
+            "material_request_type",
+        )
+
+    @patch("masar_requests.material_request_engine.frappe.db.get_value")
+    def test_zero_valuation_does_not_apply_to_other_stock_entries(self, get_value):
+        # AR: الاستلام والتحويل لا يتأثران بالتعديل.
+        # EN: Receipts and transfers remain unaffected.
+        row = SimpleNamespace(
+            material_request="MAT-MR-TEST-0001",
+            allow_zero_valuation_rate=0,
+        )
+        doc = SimpleNamespace(
+            purpose="Material Receipt",
+            items=[row],
+        )
+
+        allow_zero_valuation_for_internal_material_issue(doc)
+
+        self.assertEqual(row.allow_zero_valuation_rate, 0)
+        get_value.assert_not_called()
 
     def test_attendance_report_is_required_at_creation(self):
         # AR: التقرير محرر نص مطلوب ويظهر في دورة الطلب الأولى.

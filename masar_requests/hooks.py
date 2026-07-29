@@ -268,6 +268,22 @@ doc_events = {
         ),
     },
 
+    "Stock Entry": {
+        # AR:
+        # طلب الصرف الداخلي لا يطلب من الموظف إدخال سعر. عند إنشاء
+        # Stock Entry من Material Request يسمح الخادم بالقيمة الصفرية
+        # فقط عند عدم وجود تقييم سابق للصنف.
+        #
+        # EN:
+        # Internal issues do not require requester-entered prices. When a
+        # Stock Entry is mapped from a Material Request, zero valuation is
+        # allowed only when no prior item valuation exists.
+        "before_validate": (
+            "masar_requests.material_request_engine."
+            "allow_zero_valuation_for_internal_material_issue"
+        ),
+    },
+
     "Material Request": {
         # AR: قواعد الحماية والانشطار تعمل في Python أصلي قابل للاختبار.
         # EN: Protection and splitting rules run in testable native Python.

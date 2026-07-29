@@ -36,6 +36,46 @@ FORWARD_STATES_AFTER_STOCK = {
 }
 
 
+def allow_zero_valuation_for_internal_material_issue(doc, method=None):
+    """
+    AR:
+        السماح بسعر تقييم صفري فقط لأسطر Stock Entry من نوع Material Issue
+        والمرتبطة فعليًا بطلب مواد داخلي. لا يغيّر هذا أسعار طلب المواد،
+        ولا يطبق على الاستلام أو الشراء أو التحويل.
+
+        هذا الخيار لا يفرض سعرًا صفريًا عندما يوجد تقييم فعلي للصنف؛
+        بل يسمح فقط بإكمال الحركة إذا لم يجد ERPNext تقييمًا سابقًا.
+
+    EN:
+        Permit zero valuation only for Material Issue Stock Entry rows that
+        are actually linked to an internal Material Request. This does not
+        change Material Request prices and does not apply to receipts,
+        purchases, or transfers.
+
+        This does not force a zero rate when ERPNext already has a valuation;
+        it only permits submission when no prior valuation can be resolved.
+    """
+    if getattr(doc, "purpose", None) != "Material Issue":
+        return
+
+    request_type_cache = {}
+
+    for row in getattr(doc, "items", []) or []:
+        material_request = getattr(row, "material_request", None)
+        if not material_request:
+            continue
+
+        if material_request not in request_type_cache:
+            request_type_cache[material_request] = frappe.db.get_value(
+                "Material Request",
+                material_request,
+                "material_request_type",
+            )
+
+        if request_type_cache[material_request] == "Material Issue":
+            row.allow_zero_valuation_rate = 1
+
+
 def before_save_material_request(doc, method=None):
     # AR: تشغيل قواعد حماية وانشطار طلب المواد قبل الحفظ.
     # EN: Run Material Request protection and splitting rules before save.
@@ -114,6 +154,11 @@ def validate_protected_item_values(doc, old_doc):
                         "MR Qty Modifier, or System Manager can edit it."
                     )
                 )
+
+    # AR: السعر والمبلغ يخصان طلبات الشراء فقط، وليس طلبات الصرف الداخلي.
+    # EN: Rate and amount are relevant only to Purchase requests.
+    if doc.material_request_type != "Purchase":
+        return
 
     can_edit_financials = bool(
         user_roles

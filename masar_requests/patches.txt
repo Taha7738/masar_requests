@@ -27,3 +27,7 @@ masar_requests.patches.sync_leave_and_material_bypass_print_v16
 # AR: V17 لعكس واجهة الإجازة، استثناء طلب HR User الشخصي، وتعريب ملاحظات الطباعة.
 # EN: V17 Leave UI swap, HR User personal-request exemption, and Arabic print notices.
 masar_requests.patches.sync_leave_layout_hr_user_and_arabic_print_v17
+
+# AR: V18 لإخفاء السعر في طلب الصرف الداخلي وربط السماح بالتقييم الصفري بحركة الصرف.
+# EN: V18 hides internal-issue pricing and enables guarded zero valuation for linked issues.
+masar_requests.patches.apply_material_issue_request_ui_v18

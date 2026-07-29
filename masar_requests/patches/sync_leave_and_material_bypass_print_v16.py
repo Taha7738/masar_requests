@@ -75,7 +75,7 @@ def _database_values(definition, doctype):
         "margin_bottom": definition.get("margin_bottom", 0),
         "margin_left": definition.get("margin_left", 0),
         "margin_right": definition.get("margin_right", 0),
-        "pdf_generator": definition.get("pdf_generator") or "wkhtmltopdf",
+        # "pdf_generator": definition.get("pdf_generator") or "wkhtmltopdf",
     }
 
 

@@ -504,12 +504,32 @@ def modify_material_request_properties():
             "Check",
         )
 
+    # AR:
+    # طلب الصرف الداخلي لا يحتاج أن يعرض للموظف السعر أو المبلغ.
+    # تظهر الحقول المالية فقط عندما يكون نوع الطلب Purchase، وتبقى خارج
+    # أعمدة الجدول المختصرة حتى لا تُربك مقدم طلب الصرف من المخزن.
+    #
+    # EN:
+    # Internal Material Issue requests do not need rate/amount inputs.
+    # Financial fields are shown only for Purchase requests and are removed
+    # from the compact grid view.
+    frappe.db.sql(
+        """
+        DELETE FROM `tabProperty Setter`
+        WHERE doc_type = 'Material Request Item'
+          AND field_name IN ('qty', 'rate', 'amount')
+          AND property IN ('read_only_depends_on', 'depends_on')
+        """
+    )
+
+    purchase_only_eval = "eval:parent.material_request_type === 'Purchase'"
+
     for fieldname in ("rate", "amount"):
         make_property_setter(
             "Material Request Item",
             fieldname,
             "depends_on",
-            "",
+            purchase_only_eval,
             "Data",
         )
         make_property_setter(
@@ -523,18 +543,9 @@ def modify_material_request_properties():
             "Material Request Item",
             fieldname,
             "in_list_view",
-            1,
+            0,
             "Check",
         )
-
-    frappe.db.sql(
-        """
-        DELETE FROM `tabProperty Setter`
-        WHERE doc_type = 'Material Request Item'
-          AND field_name IN ('qty', 'rate', 'amount')
-          AND property IN ('read_only_depends_on', 'depends_on')
-        """
-    )
 
     cols_to_remove = [
         "description",
