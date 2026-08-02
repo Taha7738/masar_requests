@@ -1,3 +1,8 @@
+"""
+AR: منطق الصلاحيات والتحكم في الوصول ضمن الوحدة `leave_application_permissions`.
+EN: Permission and access-control logic for the `leave_application_permissions` module.
+"""
+
 # ======================================================================
 # AR: صلاحيات طلب الإجازة والمشاركة التلقائية - تطبيق Masar Requests
 # EN: Leave Application permissions and automatic sharing - Masar Requests
@@ -106,6 +111,10 @@ PERMISSION_SNAPSHOT_FIELDS = [
 def is_full_admin_user(user=None):
     # AR: التحقق من أن المستخدم هو Administrator أو يحمل دور مدير النظام.
     # EN: Check whether the user is Administrator or has the System Manager role.
+    """
+    AR: تنفيذ التحقق من كون `full` `admin` المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute is full admin user within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
 
     if user in ADMIN_USERS:
@@ -125,6 +134,10 @@ def is_full_admin_user(user=None):
 def is_hr_manager_user(user=None):
     # AR: التحقق من أن المستخدم يحمل دور مدير الموارد البشرية.
     # EN: Check whether the user has the HR Manager role.
+    """
+    AR: تنفيذ التحقق من كون `hr` المدير المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute is hr manager user within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
 
     try:
@@ -141,6 +154,10 @@ def is_hr_manager_user(user=None):
 def is_unrestricted_leave_user(user=None):
     # AR: التحقق من امتلاك المستخدم وصولًا غير مقيد إلى طلبات الإجازة.
     # EN: Check whether the user has unrestricted Leave Application access.
+    """
+    AR: تنفيذ التحقق من كون `unrestricted` الإجازة المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute is unrestricted leave user within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
     return is_full_admin_user(user) or is_hr_manager_user(user)
 
@@ -149,6 +166,10 @@ def is_unrestricted_leave_user(user=None):
 # السماح للمدير المباشر برؤية رصيد إجازة الموظف
 
 def can_access_employee_leave_data(employee, user=None):
+    """
+    AR: تنفيذ التحقق من إمكانية الوصول الموظف الإجازة `data` ضمن وحدة `leave_application_permissions`.
+    EN: Execute can access employee leave data within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
 
     # Employee himself
@@ -192,6 +213,10 @@ def can_access_employee_leave_data(employee, user=None):
 def _employee_user(employee):
     # AR: جلب حساب المستخدم المرتبط بسجل الموظف.
     # EN: Return the User account linked to an Employee.
+    """
+    AR: تنفيذ الموظف المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute employee user within the `leave_application_permissions` module.
+    """
     if not employee:
         return None
 
@@ -206,6 +231,10 @@ def _employee_user(employee):
 def _employee_direct_manager_user(employee):
     # AR: جلب حساب المدير المباشر للموظف من حقل reports_to.
     # EN: Return the direct manager User resolved through reports_to.
+    """
+    AR: تنفيذ الموظف `direct` المدير المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute employee direct manager user within the `leave_application_permissions` module.
+    """
     if not employee:
         return None
 
@@ -233,6 +262,10 @@ def _employee_direct_manager_user(employee):
 def _employee_own_secretary_user(employee):
     # AR: جلب حساب السكرتير المرتبط بالموظف.
     # EN: Return the secretary User linked to an Employee.
+    """
+    AR: تنفيذ الموظف `own` السكرتير المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute employee own secretary user within the `leave_application_permissions` module.
+    """
     if not employee:
         return None
 
@@ -260,6 +293,10 @@ def _employee_own_secretary_user(employee):
 def _permission_snapshot(doc):
     # AR: جلب النسخة المحفوظة من المستند لاستخدامها في فحص الصلاحيات.
     # EN: Load the saved document snapshot for permission checks.
+    """
+    AR: تنفيذ صلاحية `snapshot` ضمن وحدة `leave_application_permissions`.
+    EN: Execute permission snapshot within the `leave_application_permissions` module.
+    """
     before_save = getattr(doc, "_doc_before_save", None)
 
     if before_save:
@@ -288,6 +325,10 @@ def _permission_snapshot(doc):
 def _relation_flags(doc, user):
     # AR: تحديد علاقة المستخدم بطلب الإجازة الحالي.
     # EN: Determine how the user is related to the current leave request.
+    """
+    AR: تنفيذ `relation` `flags` ضمن وحدة `leave_application_permissions`.
+    EN: Execute relation flags within the `leave_application_permissions` module.
+    """
     applicant_user = _employee_user(doc.get("employee"))
 
     manager_user = _employee_direct_manager_user(
@@ -325,6 +366,10 @@ def _relation_flags(doc, user):
 def _is_secretary_only(doc, user):
     # AR: التحقق من أن المستخدم سكرتير فقط ولا يملك دورًا آخر في الطلب.
     # EN: Check whether the user is only a secretary for this request.
+    """
+    AR: تنفيذ التحقق من كون السكرتير `only` ضمن وحدة `leave_application_permissions`.
+    EN: Execute is secretary only within the `leave_application_permissions` module.
+    """
     relation = _relation_flags(doc, user)
 
     return bool(
@@ -343,6 +388,10 @@ def _is_secretary_only(doc, user):
 def _can_write_leave(doc, user):
     # AR: تحديد إمكانية تعديل طلب الإجازة حسب المستخدم ومرحلة سير العمل.
     # EN: Determine write access from the user relation and workflow state.
+    """
+    AR: تنفيذ التحقق من إمكانية الكتابة الإجازة ضمن وحدة `leave_application_permissions`.
+    EN: Execute can write leave within the `leave_application_permissions` module.
+    """
     if is_unrestricted_leave_user(user):
         return True
 
@@ -381,13 +430,17 @@ def get_same_department_substitute_employees(
     doctype, txt, searchfield, start, page_len, filters
 ):
     """
-    AR:
-        إرجاع الموظفين النشطين في نفس إدارة الموظف مقدم الطلب فقط،
-        مع استبعاد مقدم الطلب والموظفين غير المرتبطين بحساب مستخدم.
+    AR: تنفيذ استرجاع `same` `department` `substitute` `employees` ضمن وحدة `leave_application_permissions`.
+    EN: Execute get same department substitute employees within the `leave_application_permissions` module.
 
-    EN:
-        Return active employees from the applicant's department only,
-        excluding the applicant and employees without a linked User.
+    DETAILS / التفاصيل:
+    AR:
+            إرجاع الموظفين النشطين في نفس إدارة الموظف مقدم الطلب فقط،
+            مع استبعاد مقدم الطلب والموظفين غير المرتبطين بحساب مستخدم.
+
+        EN:
+            Return active employees from the applicant's department only,
+            excluding the applicant and employees without a linked User.
     """
     filters = frappe.parse_json(filters) if isinstance(filters, str) else (filters or {})
     employee = filters.get("employee")
@@ -451,6 +504,10 @@ def get_same_department_substitute_employees(
 def validate_leave_application(doc, method=None):
     # AR: التحقق من صلاحيات وبيانات طلب الإجازة قبل الحفظ.
     # EN: Validate leave permissions and participant data before saving.
+    """
+    AR: تنفيذ التحقق من صحة الإجازة `application` ضمن وحدة `leave_application_permissions`.
+    EN: Execute validate leave application within the `leave_application_permissions` module.
+    """
     user = frappe.session.user
     stored_doc = _permission_snapshot(doc)
 
@@ -493,6 +550,10 @@ def validate_leave_application(doc, method=None):
 def set_substitute_user(doc):
     # AR: تعبئة بيانات المستخدم والاسم للموظف البديل والتحقق منها.
     # EN: Resolve and validate the substitute Employee and User data.
+    """
+    AR: تنفيذ تعيين `substitute` المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute set substitute user within the `leave_application_permissions` module.
+    """
     substitute_employee = doc.get(SUBSTITUTE_EMPLOYEE_FIELD)
 
     if not substitute_employee:
@@ -575,6 +636,10 @@ def set_substitute_user(doc):
 def set_direct_manager_from_reports_to(doc):
     # AR: تعبئة بيانات المدير المباشر وسكرتيره اعتمادًا على reports_to.
     # EN: Resolve the direct manager and secretary through reports_to.
+    """
+    AR: تنفيذ تعيين `direct` المدير `from` `reports` `to` ضمن وحدة `leave_application_permissions`.
+    EN: Execute set direct manager from reports to within the `leave_application_permissions` module.
+    """
     if not doc.get("employee"):
         return
 
@@ -657,9 +722,17 @@ def set_direct_manager_from_reports_to(doc):
 def sync_leave_application_display_names(doc):
     # AR: مزامنة أسماء الأطراف الظاهرة داخل طلب الإجازة.
     # EN: Synchronize participant display names on the leave request.
+    """
+    AR: تنفيذ مزامنة الإجازة `application` `display` `names` ضمن وحدة `leave_application_permissions`.
+    EN: Execute sync leave application display names within the `leave_application_permissions` module.
+    """
     def set_if_field(fieldname, value):
         # AR: تعيين قيمة الحقل عند وجوده في نموذج طلب الإجازة.
         # EN: Set a field value only when the field exists.
+        """
+        AR: تنفيذ تعيين `if` الحقل ضمن وحدة `leave_application_permissions`.
+        EN: Execute set if field within the `leave_application_permissions` module.
+        """
         if doc.meta.has_field(fieldname):
             doc.set(fieldname, value)
 
@@ -724,6 +797,10 @@ def sync_leave_application_display_names(doc):
 def _get_previous_workflow_state(doc):
     # AR: جلب حالة سير العمل السابقة للمستند.
     # EN: Return the document workflow state before the update.
+    """
+    AR: تنفيذ استرجاع `previous` سير العمل الحالة ضمن وحدة `leave_application_permissions`.
+    EN: Execute get previous workflow state within the `leave_application_permissions` module.
+    """
     before_save = getattr(doc, "_doc_before_save", None)
 
     if before_save:
@@ -747,6 +824,10 @@ def _get_previous_workflow_state(doc):
 def _get_previous_approval_values(doc):
     # AR: جلب قيم الاعتماد السابقة قبل تحديث الطلب.
     # EN: Return approval values stored before the update.
+    """
+    AR: تنفيذ استرجاع `previous` `approval` `values` ضمن وحدة `leave_application_permissions`.
+    EN: Execute get previous approval values within the `leave_application_permissions` module.
+    """
     before_save = getattr(doc, "_doc_before_save", None)
 
     if before_save:
@@ -783,6 +864,10 @@ def _get_previous_approval_values(doc):
 def _approval_or_fallback(value, fallback):
     # AR: إرجاع قيمة الاعتماد أو استخدام القيمة البديلة عند غيابها.
     # EN: Return an approval value or its fallback.
+    """
+    AR: تنفيذ `approval` `or` `fallback` ضمن وحدة `leave_application_permissions`.
+    EN: Execute approval or fallback within the `leave_application_permissions` module.
+    """
     valid_values = {
         APPROVAL_PENDING,
         APPROVAL_APPROVED,
@@ -801,6 +886,10 @@ def _approval_or_fallback(value, fallback):
 def sync_approval_status_fields(doc):
     # AR: مزامنة حقول حالات الاعتماد مع انتقالات سير العمل.
     # EN: Synchronize approval status fields with workflow transitions.
+    """
+    AR: تنفيذ مزامنة `approval` الحالة الحقول ضمن وحدة `leave_application_permissions`.
+    EN: Execute sync approval status fields within the `leave_application_permissions` module.
+    """
     state = doc.get("workflow_state") or STATE_DRAFT
     previous_state = _get_previous_workflow_state(doc)
     previous_values = _get_previous_approval_values(doc)
@@ -1021,6 +1110,10 @@ def sync_approval_status_fields(doc):
 def on_update_leave_application(doc, method=None):
     # AR: مزامنة المشاركات وإرسال الإشعارات بعد تحديث طلب الإجازة.
     # EN: Synchronize shares and send notifications after an update.
+    """
+    AR: تنفيذ معالجة حدث تحديث الإجازة `application` ضمن وحدة `leave_application_permissions`.
+    EN: Execute on update leave application within the `leave_application_permissions` module.
+    """
     sync_leave_application_shares(doc)
     send_leave_workflow_notifications(doc)
 
@@ -1032,6 +1125,10 @@ def on_update_leave_application(doc, method=None):
 
 def _grant_docshare(doc, user, write=0):
     # AR: منح مستخدم محدد مشاركة على طلب الإجازة بصلاحية مناسبة.
+    """
+    AR: تنفيذ منح `docshare` ضمن وحدة `leave_application_permissions`.
+    EN: Execute grant docshare within the `leave_application_permissions` module.
+    """
     if (
         not user
         or user == "Administrator"
@@ -1067,6 +1164,10 @@ def _grant_docshare(doc, user, write=0):
 
 def _grant_employee_docshare(employee, user):
     # AR: منح قراءة فقط لسجل موظف مرتبط بطلب الإجازة.
+    """
+    AR: تنفيذ منح الموظف `docshare` ضمن وحدة `leave_application_permissions`.
+    EN: Execute grant employee docshare within the `leave_application_permissions` module.
+    """
     if (
         not employee
         or not user
@@ -1105,11 +1206,19 @@ def _grant_employee_docshare(employee, user):
 def sync_leave_application_shares(doc, method=None):
     # AR: مزامنة مشاركات طلب الإجازة مع جميع الأطراف المرتبطة.
     # EN: Synchronize Leave Application shares for all participants.
+    """
+    AR: تنفيذ مزامنة الإجازة `application` `shares` ضمن وحدة `leave_application_permissions`.
+    EN: Execute sync leave application shares within the `leave_application_permissions` module.
+    """
     permissions = {}
 
     # AR: حفظ أقوى صلاحية مطلوبة لكل مستخدم ضمن عملية المزامنة.
     # EN: Keep the strongest required permission for each user.
     def grant(user, write):
+        """
+        AR: تنفيذ منح ضمن وحدة `leave_application_permissions`.
+        EN: Execute grant within the `leave_application_permissions` module.
+        """
         if not user:
             return
 
@@ -1194,13 +1303,17 @@ def sync_leave_application_shares(doc, method=None):
 
 def _translate_leave_notification_for_user(target, source, *args):
     """
-    AR:
-        ترجمة إشعار طلب الإجازة وفق لغة المستخدم المستهدف، وليس لغة منفذ
-        إجراء سير العمل الحالي.
+    AR: تنفيذ `translate` الإجازة الإشعار `for` المستخدم ضمن وحدة `leave_application_permissions`.
+    EN: Execute translate leave notification for user within the `leave_application_permissions` module.
 
-    EN:
-        Translate a Leave notification using the target user's language,
-        not the workflow actor's current session language.
+    DETAILS / التفاصيل:
+    AR:
+            ترجمة إشعار طلب الإجازة وفق لغة المستخدم المستهدف، وليس لغة منفذ
+            إجراء سير العمل الحالي.
+
+        EN:
+            Translate a Leave notification using the target user's language,
+            not the workflow actor's current session language.
     """
     language = (
         frappe.get_cached_value("User", target, "language")
@@ -1212,15 +1325,19 @@ def _translate_leave_notification_for_user(target, source, *args):
 
 def send_leave_workflow_notifications(doc):
     """
-    AR:
-        إرسال إشعارات المرحلة الحالية. عند انتظار البديل يصل الطلب أيضاً
-        للمسؤول المباشر ليعتمد فوراً أو ينتظر قرار البديل. رفض البديل يعيد
-        الطلب للموظف مع إشعار واضح لإعادة الاختيار.
+    AR: تنفيذ `send` الإجازة سير العمل `notifications` ضمن وحدة `leave_application_permissions`.
+    EN: Execute send leave workflow notifications within the `leave_application_permissions` module.
 
-    EN:
-        Notify the current stage. While waiting for the substitute, the direct
-        manager is also notified and may approve immediately or wait. Substitute
-        rejection returns the request to the applicant for reselection.
+    DETAILS / التفاصيل:
+    AR:
+            إرسال إشعارات المرحلة الحالية. عند انتظار البديل يصل الطلب أيضاً
+            للمسؤول المباشر ليعتمد فوراً أو ينتظر قرار البديل. رفض البديل يعيد
+            الطلب للموظف مع إشعار واضح لإعادة الاختيار.
+
+        EN:
+            Notify the current stage. While waiting for the substitute, the direct
+            manager is also notified and may approve immediately or wait. Substitute
+            rejection returns the request to the applicant for reselection.
     """
     state = doc.get("workflow_state")
     previous_state = _get_previous_workflow_state(doc)
@@ -1339,6 +1456,10 @@ def send_leave_workflow_notifications(doc):
 def remove_leave_application_shares(doc, method=None):
     # AR: إزالة مشاركات طلب الإجازة عند حذف المستند.
     # EN: Remove Leave Application shares when the document is deleted.
+    """
+    AR: تنفيذ إزالة الإجازة `application` `shares` ضمن وحدة `leave_application_permissions`.
+    EN: Execute remove leave application shares within the `leave_application_permissions` module.
+    """
     pass
 
 
@@ -1350,6 +1471,10 @@ def remove_leave_application_shares(doc, method=None):
 def resync_all_leave_application_shares():
     # AR: إعادة مزامنة مشاركات جميع طلبات الإجازة الموجودة.
     # EN: Re-synchronize shares for all existing leave requests.
+    """
+    AR: تنفيذ `resync` `all` الإجازة `application` `shares` ضمن وحدة `leave_application_permissions`.
+    EN: Execute resync all leave application shares within the `leave_application_permissions` module.
+    """
     names = frappe.get_all(
         "Leave Application",
         pluck="name",
@@ -1372,6 +1497,10 @@ def resync_all_leave_application_shares():
 def resync_all_leave_application_display_names():
     # AR: إصلاح أسماء العرض لجميع طلبات الإجازة القديمة.
     # EN: Repair display names on all existing leave requests.
+    """
+    AR: تنفيذ `resync` `all` الإجازة `application` `display` `names` ضمن وحدة `leave_application_permissions`.
+    EN: Execute resync all leave application display names within the `leave_application_permissions` module.
+    """
     names = frappe.get_all(
         "Leave Application",
         pluck="name",
@@ -1413,6 +1542,10 @@ def resync_all_leave_application_display_names():
 def _current_direct_manager_employee(employee):
     # AR: جلب سجل المدير المباشر الحالي للموظف.
     # EN: Return the current direct manager Employee.
+    """
+    AR: تنفيذ الحالي `direct` المدير الموظف ضمن وحدة `leave_application_permissions`.
+    EN: Execute current direct manager employee within the `leave_application_permissions` module.
+    """
     if not employee:
         return None
 
@@ -1431,6 +1564,10 @@ def _current_direct_manager_employee(employee):
 def _readable_employee_name(employee):
     # AR: جلب الاسم المقروء للموظف.
     # EN: Return a readable Employee name.
+    """
+    AR: تنفيذ `readable` الموظف `name` ضمن وحدة `leave_application_permissions`.
+    EN: Execute readable employee name within the `leave_application_permissions` module.
+    """
     if not employee:
         return None
 
@@ -1449,6 +1586,10 @@ def _readable_employee_name(employee):
 def _available_leave_actions(doc, user=None):
     # AR: تحديد إجراءات سير العمل المتاحة للمستخدم الحالي.
     # EN: Return workflow actions available to the current user.
+    """
+    AR: تنفيذ `available` الإجازة `actions` ضمن وحدة `leave_application_permissions`.
+    EN: Execute available leave actions within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
     state = doc.get("workflow_state") or STATE_DRAFT
     relation = _relation_flags(doc, user)
@@ -1526,6 +1667,10 @@ def _available_leave_actions(doc, user=None):
 def get_leave_application_ui_context(docname):
     # AR: إرجاع بيانات الأطراف والإجراءات اللازمة لواجهة طلب الإجازة.
     # EN: Return participants and actions required by the form UI.
+    """
+    AR: تنفيذ استرجاع الإجازة `application` `ui` `context` ضمن وحدة `leave_application_permissions`.
+    EN: Execute get leave application ui context within the `leave_application_permissions` module.
+    """
     doc = frappe.get_doc("Leave Application", docname)
     doc.check_permission("read")
 
@@ -1587,6 +1732,10 @@ def get_leave_application_ui_context(docname):
 def apply_masar_requests_leave_workflow_action(docname, action):
     # AR: تنفيذ إجراء سير عمل طلب الإجازة بعد التحقق من الصلاحية.
     # EN: Apply an authorized Leave Application workflow action.
+    """
+    AR: تنفيذ تطبيق `masar` `requests` الإجازة سير العمل `action` ضمن وحدة `leave_application_permissions`.
+    EN: Execute apply masar requests leave workflow action within the `leave_application_permissions` module.
+    """
     doc = frappe.get_doc("Leave Application", docname)
     doc.check_permission("read")
 
@@ -1613,6 +1762,10 @@ def apply_masar_requests_leave_workflow_action(docname, action):
 def repair_all_leave_application_display_data():
     # AR: إصلاح بيانات العرض لجميع طلبات الإجازة كعملية إدارية.
     # EN: Repair display data on every leave request as an admin task.
+    """
+    AR: تنفيذ `repair` `all` الإجازة `application` `display` `data` ضمن وحدة `leave_application_permissions`.
+    EN: Execute repair all leave application display data within the `leave_application_permissions` module.
+    """
     frappe.only_for("System Manager")
 
     names = frappe.get_all(
@@ -1664,6 +1817,10 @@ def repair_all_leave_application_display_data():
 def get_users_with_role_safe(role):
     # AR: جلب المستخدمين المسند إليهم دور محدد.
     # EN: Return users assigned to a specified role.
+    """
+    AR: تنفيذ استرجاع `users` `with` الدور `safe` ضمن وحدة `leave_application_permissions`.
+    EN: Execute get users with role safe within the `leave_application_permissions` module.
+    """
     return frappe.get_all(
         "Has Role",
         filters={"role": role},
@@ -1679,6 +1836,10 @@ def get_users_with_role_safe(role):
 def leave_application_query(user=None):
     # AR: إنشاء شرط يحدد طلبات الإجازة الظاهرة للمستخدم في القوائم.
     # EN: Build the list query condition for visible leave requests.
+    """
+    AR: تنفيذ الإجازة `application` `query` ضمن وحدة `leave_application_permissions`.
+    EN: Execute leave application query within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
 
     # AR: HR وSystem Manager يشاهدون كل الطلبات.
@@ -1745,6 +1906,10 @@ def leave_application_has_permission(
 ):
     # AR: فحص صلاحية المستخدم على طلب إجازة محدد.
     # EN: Check a user permission on one Leave Application.
+    """
+    AR: تنفيذ الإجازة `application` التحقق من وجود صلاحية ضمن وحدة `leave_application_permissions`.
+    EN: Execute leave application has permission within the `leave_application_permissions` module.
+    """
     user = user or frappe.session.user
     permission_type = permission_type or ptype or "read"
 
@@ -1809,6 +1974,10 @@ def employee_has_permission(
 ):
     # AR: دالة توافق قديمة لا تمنح صلاحية عامة على سجلات الموظفين.
     # EN: Legacy compatibility function that grants no broad Employee access.
+    """
+    AR: تنفيذ الموظف التحقق من وجود صلاحية ضمن وحدة `leave_application_permissions`.
+    EN: Execute employee has permission within the `leave_application_permissions` module.
+    """
     return None
 
 
@@ -1820,10 +1989,18 @@ def employee_has_permission(
 def sync_leave_employee_user_permissions(doc):
     # AR: دالة توافق معطلة لمنع إنشاء صلاحيات مستخدم دائمة.
     # EN: Disabled compatibility function for permanent User Permissions.
+    """
+    AR: تنفيذ مزامنة الإجازة الموظف المستخدم الصلاحيات ضمن وحدة `leave_application_permissions`.
+    EN: Execute sync leave employee user permissions within the `leave_application_permissions` module.
+    """
     return
 
 
 def add_employee_user_permission(user, employee):
     # AR: دالة توافق معطلة لمنع إضافة صلاحية موظف دائمة.
     # EN: Disabled compatibility function for permanent Employee permissions.
+    """
+    AR: تنفيذ إضافة الموظف المستخدم صلاحية ضمن وحدة `leave_application_permissions`.
+    EN: Execute add employee user permission within the `leave_application_permissions` module.
+    """
     return

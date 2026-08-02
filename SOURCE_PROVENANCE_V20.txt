@@ -1,0 +1,24 @@
+Masar Requests V20 - Source Provenance
+======================================
+
+AR:
+تم بناء هذا الإصدار مباشرة من الملف المرفوع التالي دون استبداله بإصدار أقدم:
+masar_requestsاخر اصدار 30-7-2026.zip
+
+SHA-256 للملف المصدر:
+e6b0e3e5b28e55ed73f90385e7fa8d0993c471ec2105d6e8839fad057ab64dea
+
+تمت مقارنة شجر الملفات الناتج مع الاستخراج الأصلي بالـ SHA-256. الملفات التي
+تغيرت أو أضيفت أو حذفت محصورة في MODIFIED_FILES_V20.md وفي Patch V20.
+
+EN:
+This release was built directly from the uploaded archive below, without
+replacing it with an older project version:
+masar_requestsاخر اصدار 30-7-2026.zip
+
+Source archive SHA-256:
+e6b0e3e5b28e55ed73f90385e7fa8d0993c471ec2105d6e8839fad057ab64dea
+
+The resulting file tree was compared against the original extraction by
+SHA-256. Added, modified, and deleted files are limited to the V20 change list
+and patch.

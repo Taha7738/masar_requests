@@ -1,3 +1,8 @@
+"""
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `fix_attendance_print_and_notification_translation_v15` على المواقع القائمة.
+EN: Idempotent migration patch for applying `fix_attendance_print_and_notification_translation_v15` changes to existing sites.
+"""
+
 # ============================================================================
 # AR: مزامنة تنسيق طباعة المهمة وترجمة إشعارات المهمة والإجازة — V15
 # EN: Sync Official Duty print format and notification translations — V15
@@ -14,8 +19,8 @@ PRINT_FORMAT_DOCTYPE = "Attendance Request"
 
 def _print_format_json_path():
     """
-    AR: إعادة مسار ملف تنسيق الطباعة القياسي داخل التطبيق.
-    EN: Return the standard print-format JSON path inside the app.
+    AR: تنفيذ طباعة تنسيق `json` `path` ضمن وحدة `fix_attendance_print_and_notification_translation_v15`.
+    EN: Execute print format json path within the `fix_attendance_print_and_notification_translation_v15` module.
     """
     return Path(
         frappe.get_app_path(
@@ -30,8 +35,8 @@ def _print_format_json_path():
 
 def _load_print_format_definition():
     """
-    AR: قراءة تعريف تنسيق الطباعة من ملف JSON المرفق مع التطبيق.
-    EN: Load the print-format definition shipped with the app.
+    AR: تنفيذ تحميل طباعة تنسيق `definition` ضمن وحدة `fix_attendance_print_and_notification_translation_v15`.
+    EN: Execute load print format definition within the `fix_attendance_print_and_notification_translation_v15` module.
     """
     path = _print_format_json_path()
     if not path.exists():
@@ -43,13 +48,17 @@ def _load_print_format_definition():
 
 def _sync_print_format_to_database():
     """
-    AR:
-        تحديث سجل Print Format الموجود مباشرة من JSON. هذا ضروري لأن بعض
-        المواقع تحتفظ بنسخة قاعدة بيانات أقدم حتى بعد استبدال الملف وتشغيل build.
+    AR: تنفيذ مزامنة طباعة تنسيق `to` `database` ضمن وحدة `fix_attendance_print_and_notification_translation_v15`.
+    EN: Execute sync print format to database within the `fix_attendance_print_and_notification_translation_v15` module.
 
-    EN:
-        Update the database Print Format directly from JSON. Some sites retain
-        an older database copy even after replacing the file and rebuilding assets.
+    DETAILS / التفاصيل:
+    AR:
+            تحديث سجل Print Format الموجود مباشرة من JSON. هذا ضروري لأن بعض
+            المواقع تحتفظ بنسخة قاعدة بيانات أقدم حتى بعد استبدال الملف وتشغيل build.
+
+        EN:
+            Update the database Print Format directly from JSON. Some sites retain
+            an older database copy even after replacing the file and rebuilding assets.
     """
     definition = _load_print_format_definition()
     values = {
@@ -88,13 +97,17 @@ def _sync_print_format_to_database():
 
 def execute():
     """
-    AR:
-        تطبيق تنسيق الطباعة الجديد ومسح كاش المستند والترجمات. الإشعارات
-        الجديدة فقط ستُنشأ باللغة الصحيحة؛ سجلات الإشعارات التاريخية لا تُغيّر.
+    AR: تنفيذ تنفيذ ضمن وحدة `fix_attendance_print_and_notification_translation_v15`.
+    EN: Execute execute within the `fix_attendance_print_and_notification_translation_v15` module.
 
-    EN:
-        Apply the new print format and clear DocType/translation caches. Only new
-        notifications are translated; historical Notification Log rows stay unchanged.
+    DETAILS / التفاصيل:
+    AR:
+            تطبيق تنسيق الطباعة الجديد ومسح كاش المستند والترجمات. الإشعارات
+            الجديدة فقط ستُنشأ باللغة الصحيحة؛ سجلات الإشعارات التاريخية لا تُغيّر.
+
+        EN:
+            Apply the new print format and clear DocType/translation caches. Only new
+            notifications are translated; historical Notification Log rows stay unchanged.
     """
     _sync_print_format_to_database()
 

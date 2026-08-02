@@ -1,17 +1,26 @@
-__version__ = "1.1.1"
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `__init__`.
+EN: Masar application functionality implemented by the `__init__` module.
+"""
+
+__version__ = "1.2.0"
 
 
 def _apply_compatible_runtime_patches():
     """
-    AR:
-        تطبيق الترقيعات الاختيارية المتوافقة فقط. لا نسجّل خطأ قاعدة بيانات
-        أثناء استيراد التطبيق لأن اختلاف واجهة HRMS بين الإصدارات لا ينبغي
-        أن يمنع تشغيل Masar Requests أو يملأ Error Log برسائل مضللة.
+    AR: تنفيذ تطبيق `compatible` `runtime` `patches` ضمن وحدة `__init__`.
+    EN: Execute apply compatible runtime patches within the `__init__` module.
 
-    EN:
-        Apply only compatible optional runtime patches. Do not log a database
-        error while the app is imported: an HRMS API difference must not stop
-        Masar Requests from loading or create misleading Error Log entries.
+    DETAILS / التفاصيل:
+    AR:
+            تطبيق الترقيعات الاختيارية المتوافقة فقط. لا نسجّل خطأ قاعدة بيانات
+            أثناء استيراد التطبيق لأن اختلاف واجهة HRMS بين الإصدارات لا ينبغي
+            أن يمنع تشغيل Masar Requests أو يملأ Error Log برسائل مضللة.
+
+        EN:
+            Apply only compatible optional runtime patches. Do not log a database
+            error while the app is imported: an HRMS API difference must not stop
+            Masar Requests from loading or create misleading Error Log entries.
     """
     try:
         from masar_requests.leave_balance_report_patch import apply_patch

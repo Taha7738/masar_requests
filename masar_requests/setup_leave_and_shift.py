@@ -1,7 +1,13 @@
+"""
+AR: إعداد وتهيئة مكونات التطبيق ضمن الوحدة `setup_leave_and_shift`.
+EN: Application setup and configuration routines for the `setup_leave_and_shift` module.
+"""
+
 import json
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+from frappe.utils import cint
 
 
 
@@ -43,8 +49,8 @@ def setup_leave_and_shift_all():
     # AR: إعداد حقول الإجازة والورديات والواجهة وسير العمل عند التثبيت.
     # EN: Configure leave and shift fields, layout, and workflow on install.
     """
-    الدالة الرئيسية لتشغيل كل إعدادات الإجازات والمناوبات
-    Main function to run all Leave and Shift settings
+    AR: تنفيذ إعداد الإجازة `and` الوردية `all` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute setup leave and shift all within the `setup_leave_and_shift` module.
     """
     # 1. إعادة ضبط حقول الوقت إذا لزم الأمر / Reset partial time fields if needed
     reset_partial_time_custom_fields_if_needed()
@@ -82,12 +88,29 @@ def teardown_leave_and_shift():
     # AR: إزالة إعدادات الإجازة والورديات التابعة للتطبيق.
     # EN: Remove app-owned leave and shift configuration.
     """
-    إزالة الحقول وسير العمل عند إلغاء تثبيت التطبيق
-    Remove fields and workflows upon app uninstallation
+    AR: تنفيذ `teardown` الإجازة `and` الوردية ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute teardown leave and shift within the `setup_leave_and_shift` module.
+
+    DETAILS / التفاصيل:
+    AR:
+            حذف الحقول وسير العمل وجدول الأوقات الفرعي المملوك للتطبيق فقط.
+
+        EN:
+            Remove app-owned fields, workflow, and the variable-time child table.
     """
     delete_custom_fields(get_leave_and_shift_custom_fields())
     delete_custom_fields(get_direct_manager_secretary_fields())
     delete_leave_application_workflow()
+
+    if frappe.db.exists("DocType", "Shift Time Table"):
+        child_doctype = frappe.get_doc("DocType", "Shift Time Table")
+        if cint(child_doctype.get("custom")) and child_doctype.get("module") == "Masar Requests":
+            frappe.delete_doc(
+                "DocType",
+                "Shift Time Table",
+                ignore_permissions=True,
+                force=True,
+            )
 
 
 # ==========================================
@@ -96,15 +119,18 @@ def teardown_leave_and_shift():
 
 def create_shift_time_child_table():
     """
+    AR: تنفيذ إنشاء الوردية الوقت `child` `table` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute create shift time child table within the `setup_leave_and_shift` module.
+
+    DETAILS / التفاصيل:
     AR:
-        إنشاء أو تحديث جدول أوقات المناوبة بوصفه
-        Custom Child DocType تابعًا لتطبيق Masar Requests.
+            إنشاء أو تحديث جدول أوقات الوردية الأسبوعية. يتم تحديث الحقول
+            بطريقة تراكمية حتى لا تضيع البيانات الموجودة في المواقع السابقة.
 
-    EN:
-        Create or update the Shift Time Table as a custom
-        child DocType belonging to the Masar Requests module.
+        EN:
+            Create or update the weekday Shift Time child table incrementally,
+            preserving existing site data across upgrades.
     """
-
     days_options = "\n".join(
         [
             "Sunday",
@@ -117,88 +143,91 @@ def create_shift_time_child_table():
         ]
     )
 
+    field_definitions = [
+        {
+            "fieldname": "day_of_week",
+            "label": "Day of Week",
+            "fieldtype": "Select",
+            "options": days_options,
+            "reqd": 1,
+            "in_list_view": 1,
+            "columns": 3,
+        },
+        {
+            "fieldname": "start_time",
+            "label": "Start Time",
+            "fieldtype": "Time",
+            "reqd": 1,
+            "in_list_view": 1,
+            "columns": 3,
+        },
+        {
+            "fieldname": "end_time",
+            "label": "End Time",
+            "fieldtype": "Time",
+            "reqd": 1,
+            "in_list_view": 1,
+            "columns": 3,
+        },
+        {
+            "fieldname": "shift_hours",
+            "label": "Shift Hours",
+            "fieldtype": "Float",
+            "read_only": 1,
+            "precision": "4",
+            "in_list_view": 1,
+            "columns": 3,
+        },
+    ]
+
     if not frappe.db.exists("DocType", "Shift Time Table"):
         doc = frappe.get_doc(
             {
                 "doctype": "DocType",
                 "name": "Shift Time Table",
-
-                # AR:
-                # يجب أن تطابق هذه القيمة اسم Module Def
-                # الموجود في modules.txt حرفيًا.
-                #
-                # EN:
-                # This value must exactly match the Module Def
-                # name declared in modules.txt.
                 "module": "Masar Requests",
-
                 "custom": 1,
                 "istable": 1,
-                "fields": [
-                    {
-                        "fieldname": "day_of_week",
-                        "label": "Day of Week",
-                        "fieldtype": "Select",
-                        "options": days_options,
-                        "in_list_view": 1,
-                    },
-                    {
-                        "fieldname": "start_time",
-                        "label": "Start Time",
-                        "fieldtype": "Time",
-                        "in_list_view": 1,
-                    },
-                    {
-                        "fieldname": "end_time",
-                        "label": "End Time",
-                        "fieldtype": "Time",
-                        "in_list_view": 1,
-                    },
-                ],
+                "fields": field_definitions,
             }
         )
-
         doc.insert(ignore_permissions=True)
+        return
 
-    else:
-        # AR:
-        # تحديث الوحدة والحقول إذا كان الجدول موجودًا مسبقًا.
-        #
-        # EN:
-        # Update the module and fields when the table already exists.
-        doc = frappe.get_doc(
-            "DocType",
-            "Shift Time Table",
-        )
+    doc = frappe.get_doc("DocType", "Shift Time Table")
+    updated = False
+    if doc.module != "Masar Requests":
+        doc.module = "Masar Requests"
+        updated = True
+    if not cint(doc.istable):
+        doc.istable = 1
+        updated = True
 
-        updated = False
-
-        if doc.module != "Masar Requests":
-            doc.module = "Masar Requests"
+    existing = {field.fieldname: field for field in doc.fields}
+    for definition in field_definitions:
+        field = existing.get(definition["fieldname"])
+        if not field:
+            doc.append("fields", definition)
             updated = True
+            continue
 
-        for field in doc.fields:
-            if field.fieldname == "day_of_week":
-                if field.fieldtype != "Select":
-                    field.fieldtype = "Select"
-                    updated = True
+        for property_name, value in definition.items():
+            if property_name == "fieldname":
+                continue
+            if field.get(property_name) != value:
+                field.set(property_name, value)
+                updated = True
 
-                if field.options != days_options:
-                    field.options = days_options
-                    updated = True
-
-                break
-
-        if updated:
-            doc.save(ignore_permissions=True)
+    if updated:
+        doc.save(ignore_permissions=True)
 
 
 def reset_partial_time_custom_fields_if_needed():
     # AR: إعادة إنشاء حقول وقت الإجازة الجزئية إذا كان نوعها غير صحيح.
     # EN: Recreate partial-time fields when their field type is invalid.
     """
-    حذف وإعادة إنشاء الحقول إذا لم تكن من نوع 'وقت'
-    Delete and recreate fields if their fieldtype is not 'Time'
+    AR: تنفيذ `reset` الجزئي الوقت `custom` الحقول `if` `needed` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute reset partial time custom fields if needed within the `setup_leave_and_shift` module.
     """
     fieldnames = [
         "custom_partial_from_time_ar",
@@ -228,8 +257,8 @@ def get_leave_and_shift_custom_fields():
     # AR: إرجاع تعريفات الحقول المخصصة للإجازة والورديات.
     # EN: Return custom field definitions for leave and shift.
     """
-    تعريف الحقول المخصصة الخاصة بالإجازات والمناوبات
-    Define Custom Fields for Leave Application and Shift Type
+    AR: تنفيذ استرجاع الإجازة `and` الوردية `custom` الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute get leave and shift custom fields within the `setup_leave_and_shift` module.
     """
     return {
         "Leave Application": [
@@ -435,19 +464,47 @@ def get_leave_and_shift_custom_fields():
         ],
         "Shift Type": [
             {
+                "fieldname": "custom_enable_variable_shift_times",
+                "fieldtype": "Check",
+                "label": "Enable Variable Weekday Times",
+                "insert_after": "end_time",
+                "default": "0",
+                "description": (
+                    "Use a different start and end time for each weekday. "
+                    "Holiday dates remain controlled by the standard Holiday List."
+                ),
+            },
+            {
                 "fieldname": "custom_shift_times_section",
                 "fieldtype": "Section Break",
-                "label": "Custom Shift Times",
-                "insert_after": "end_time",
+                "label": "Variable Weekday Times",
+                "insert_after": "custom_enable_variable_shift_times",
+                "depends_on": "eval:doc.custom_enable_variable_shift_times == 1",
+            },
+            {
+                "fieldname": "custom_shift_times_effective_from",
+                "fieldtype": "Date",
+                "label": "Variable Times Effective From",
+                "insert_after": "custom_shift_times_section",
+                "depends_on": "eval:doc.custom_enable_variable_shift_times == 1",
+                "description": (
+                    "Optional. Before this date the standard Start Time and End Time are used. "
+                    "Leave blank to apply the weekday table to all dates."
+                ),
             },
             {
                 "fieldname": "custom_shift_times",
                 "fieldtype": "Table",
-                "label": "Time Table",
+                "label": "Weekday Time Table",
                 "options": "Shift Time Table",
-                "insert_after": "custom_shift_times_section",
+                "insert_after": "custom_shift_times_effective_from",
+                "depends_on": "eval:doc.custom_enable_variable_shift_times == 1",
                 "ignore_user_permissions": 1,
-            }
+                "description": (
+                    "Set one row for every weekday. Weekly offs and official holidays "
+                    "must continue to be configured in Holiday List."
+                ),
+            },
         ],
     }
 
@@ -456,7 +513,8 @@ def get_direct_manager_secretary_fields():
     # AR: إرجاع تعريفات حقول المدير المباشر والسكرتير.
     # EN: Return direct-manager and secretary field definitions.
     """
-    حقول السكرتارية / Secretary Fields
+    AR: تنفيذ استرجاع `direct` المدير السكرتير الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute get direct manager secretary fields within the `setup_leave_and_shift` module.
     """
     return {
         "Employee": [
@@ -498,35 +556,39 @@ def create_direct_manager_secretary_fields():
     # AR: إنشاء أو تحديث حقول المدير المباشر والسكرتير.
     # EN: Create or update direct-manager and secretary fields.
     """
-    إضافة حقول السكرتارية/المندوب لموافقة المدير المباشر
-    Adds secretary/delegate fields for direct manager approval.
+    AR: تنفيذ إنشاء `direct` المدير السكرتير الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute create direct manager secretary fields within the `setup_leave_and_shift` module.
     """
     create_custom_fields(get_direct_manager_secretary_fields(), update=True)
 
 
 def apply_leave_application_layout_preferences():
     """
+    AR: تنفيذ تطبيق الإجازة `application` `layout` `preferences` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute apply leave application layout preferences within the `setup_leave_and_shift` module.
+
+    DETAILS / التفاصيل:
     AR:
-        تطبيق ترتيب وواجهة نموذج طلب الإجازة وفق المتطلبات التالية:
-        1) تنظيم حقول نصف يوم وربع يوم والإجازة بالساعات.
-        2) عرض رصيد الإجازة الفعلي واعتماد المسؤول المباشر في نفس السطر
-           داخل عمودين متجاورين.
-        3) إخفاء اسم الموظف وإظهار الموظف البديل مكانه في الجزء العلوي.
-        4) إخفاء قسم الاعتماد/الموافقة القياسي وقسم تفاصيل أخرى.
+            تطبيق ترتيب وواجهة نموذج طلب الإجازة وفق المتطلبات التالية:
+            1) تنظيم حقول نصف يوم وربع يوم والإجازة بالساعات.
+            2) عرض رصيد الإجازة الفعلي واعتماد المسؤول المباشر في نفس السطر
+               داخل عمودين متجاورين.
+            3) إخفاء اسم الموظف وإظهار الموظف البديل مكانه في الجزء العلوي.
+            4) إخفاء قسم الاعتماد/الموافقة القياسي وقسم تفاصيل أخرى.
 
-        هذه الدالة لا تغيّر منطق سير العمل ولا صلاحيات الحقول؛
-        هي مسؤولة فقط عن ترتيب الواجهة وخصائص الإظهار.
+            هذه الدالة لا تغيّر منطق سير العمل ولا صلاحيات الحقول؛
+            هي مسؤولة فقط عن ترتيب الواجهة وخصائص الإظهار.
 
-    EN:
-        Apply the Leave Application form layout according to the following requirements:
-        1) Organize the Half Day, Quarter Day, and Hourly Leave fields.
-        2) Show Actual Leave Balance and Direct Manager approval on the same row
-           in two adjacent columns.
-        3) Hide Employee Name and show Substitute Employee in its place near the top.
-        4) Hide the standard Approval section and the Other Details section.
+        EN:
+            Apply the Leave Application form layout according to the following requirements:
+            1) Organize the Half Day, Quarter Day, and Hourly Leave fields.
+            2) Show Actual Leave Balance and Direct Manager approval on the same row
+               in two adjacent columns.
+            3) Hide Employee Name and show Substitute Employee in its place near the top.
+            4) Hide the standard Approval section and the Other Details section.
 
-        This function does not change workflow logic or field permissions;
-        it only controls the visual layout and visibility properties.
+            This function does not change workflow logic or field permissions;
+            it only controls the visual layout and visibility properties.
     """
 
     doctype = LEAVE_APPLICATION_DOCTYPE
@@ -936,8 +998,8 @@ def fix_leave_decimal_precision():
     # AR: ضبط الدقة العشرية لحقول أرصدة وأيام الإجازة.
     # EN: Set decimal precision for leave balance and day fields.
     """
-    ضبط الدقة العشرية لحقول الإجازات
-    Fix decimal precision for leave fields
+    AR: تنفيذ `fix` الإجازة `decimal` `precision` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute fix leave decimal precision within the `setup_leave_and_shift` module.
     """
     fields = {
         "Leave Application": [
@@ -966,8 +1028,8 @@ def fix_leave_application_link_permissions():
     # AR: تصحيح خصائص روابط الموظفين لمنع قيود صلاحيات غير مقصودة.
     # EN: Correct Employee link properties to avoid unintended restrictions.
     """
-    إصلاح صلاحيات الروابط في نموذج الإجازة
-    Fix permissions and default values for Leave Application link fields
+    AR: تنفيذ `fix` الإجازة `application` `link` الصلاحيات ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute fix leave application link permissions within the `setup_leave_and_shift` module.
     """
     fields_to_ignore_user_permissions = [
         "employee",
@@ -1017,8 +1079,8 @@ def set_employee_link_fields_to_show_employee_name():
     # AR: ضبط حقول الربط لعرض اسم الموظف بدل المعرّف.
     # EN: Configure Employee links to display employee names.
     """
-    إظهار اسم الموظف داخل حقول Employee Link
-    مع حفظ رقم الموظف داخلياً.
+    AR: تنفيذ تعيين الموظف `link` الحقول `to` `show` الموظف `name` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute set employee link fields to show employee name within the `setup_leave_and_shift` module.
     """
 
     frappe.db.set_value(
@@ -1049,8 +1111,8 @@ def get_system_manager_workflow_transitions():
     # AR: إرجاع انتقالات سير العمل المخصصة لمدير النظام.
     # EN: Return workflow transitions reserved for System Manager.
     """
-    انتقالات سير العمل الخاصة بمدير النظام
-    Extra workflow transitions for System Manager
+    AR: تنفيذ استرجاع `system` المدير سير العمل `transitions` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute get system manager workflow transitions within the `setup_leave_and_shift` module.
     """
     return [
         {"state": STATE_DRAFT, "action": ACTION_SEND_TO_SUBSTITUTE, "next_state": STATE_WAITING_SUBSTITUTE, "allowed": SYSTEM_MANAGER_ROLE, "condition": "doc.custom_substitute_user and doc.custom_direct_manager_user"},
@@ -1071,15 +1133,19 @@ def get_system_manager_workflow_transitions():
 
 def get_hr_manager_override_transitions():
     """
-    AR:
-        يمنح مدير الموارد البشرية صلاحية الاعتماد النهائي أو الرفض
-        من أي مرحلة نشطة في سير العمل، بما فيها المسودة، دون انتظار
-        الموظف البديل أو المسؤول المباشر.
+    AR: تنفيذ استرجاع `hr` المدير `override` `transitions` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute get hr manager override transitions within the `setup_leave_and_shift` module.
 
-    EN:
-        Allows HR Manager to finally approve or reject from any active
-        workflow stage, including Draft, without waiting for the
-        substitute or direct manager.
+    DETAILS / التفاصيل:
+    AR:
+            يمنح مدير الموارد البشرية صلاحية الاعتماد النهائي أو الرفض
+            من أي مرحلة نشطة في سير العمل، بما فيها المسودة، دون انتظار
+            الموظف البديل أو المسؤول المباشر.
+
+        EN:
+            Allows HR Manager to finally approve or reject from any active
+            workflow stage, including Draft, without waiting for the
+            substitute or direct manager.
     """
     return [
         # AR: الموارد البشرية تستطيع الحسم من المسودة مباشرة.
@@ -1108,8 +1174,8 @@ def create_leave_application_workflow():
     # AR: إنشاء أو تحديث سير عمل طلب الإجازة.
     # EN: Create or update the Leave Application workflow.
     """
-    إنشاء سير العمل لطلب الإجازة
-    Create Workflow for Leave Application
+    AR: تنفيذ إنشاء الإجازة `application` سير العمل ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute create leave application workflow within the `setup_leave_and_shift` module.
     """
     create_leave_workflow_actions()
     create_leave_workflow_states()
@@ -1205,8 +1271,8 @@ def create_leave_workflow_actions():
     # AR: إنشاء إجراءات سير عمل الإجازة المطلوبة.
     # EN: Create required leave workflow actions.
     """
-    إنشاء إجراءات سير العمل
-    Create workflow actions
+    AR: تنفيذ إنشاء الإجازة سير العمل `actions` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute create leave workflow actions within the `setup_leave_and_shift` module.
     """
     actions = [
         ACTION_SEND_TO_SUBSTITUTE, ACTION_SEND_TO_DIRECT_MANAGER,
@@ -1224,8 +1290,8 @@ def create_leave_workflow_states():
     # AR: إنشاء حالات سير عمل الإجازة المطلوبة.
     # EN: Create required leave workflow states.
     """
-    إنشاء حالات سير العمل
-    Create workflow states
+    AR: تنفيذ إنشاء الإجازة سير العمل `states` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute create leave workflow states within the `setup_leave_and_shift` module.
     """
     states = [
         STATE_DRAFT, STATE_WAITING_SUBSTITUTE, STATE_WAITING_DIRECT_MANAGER,
@@ -1242,8 +1308,8 @@ def get_workflow_state_style(state):
     # AR: تحديد لون ونمط حالة سير العمل.
     # EN: Return the color style for a workflow state.
     """
-    تحديد لون حالة سير العمل
-    Determine Workflow State Style (Color)
+    AR: تنفيذ استرجاع سير العمل الحالة `style` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute get workflow state style within the `setup_leave_and_shift` module.
     """
     if state == STATE_APPROVED: return "Success"
     if state == STATE_REJECTED: return "Danger"
@@ -1255,8 +1321,8 @@ def deactivate_other_leave_workflows(active_workflow_name):
     # AR: تعطيل مسارات الإجازة الأخرى المتعارضة.
     # EN: Deactivate conflicting Leave Application workflows.
     """
-    إلغاء تنشيط أي سير عمل آخر للإجازات
-    Deactivate other Leave Workflows
+    AR: تنفيذ `deactivate` `other` الإجازة `workflows` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute deactivate other leave workflows within the `setup_leave_and_shift` module.
     """
     workflows = frappe.get_all("Workflow", filters={"document_type": LEAVE_APPLICATION_DOCTYPE}, pluck="name")
     for workflow_name in workflows:
@@ -1272,8 +1338,8 @@ def delete_custom_fields(custom_fields: dict):
     # AR: حذف الحقول المخصصة المحددة عند إزالة التطبيق.
     # EN: Delete selected custom fields during uninstall.
     """
-    حذف الحقول المخصصة
-    Delete custom fields
+    AR: تنفيذ حذف `custom` الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute delete custom fields within the `setup_leave_and_shift` module.
     """
     for doctype, fields in custom_fields.items():
         frappe.db.delete(
@@ -1287,8 +1353,8 @@ def delete_leave_application_workflow():
     # AR: حذف سير عمل طلب الإجازة التابع للتطبيق.
     # EN: Delete the app-owned Leave Application workflow.
     """
-    حذف سير عمل الإجازات
-    Delete Leave Application workflow
+    AR: تنفيذ حذف الإجازة `application` سير العمل ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute delete leave application workflow within the `setup_leave_and_shift` module.
     """
     workflow_name = frappe.db.get_value(
         "Workflow",
@@ -1302,8 +1368,8 @@ def create_employee_name_display_fields():
     # AR: إنشاء حقول أسماء الموظفين المستخدمة للعرض.
     # EN: Create Employee-name fields used for display.
     """
-    دوال غير مستخدمة حالياً، تم الاحتفاظ بها للتوافقية
-    Unused functions kept for backwards compatibility
+    AR: تنفيذ إنشاء الموظف `name` `display` الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute create employee name display fields within the `setup_leave_and_shift` module.
     """
     pass
 
@@ -1311,8 +1377,8 @@ def remove_extra_employee_name_display_fields():
     # AR: إزالة حقول أسماء العرض القديمة أو الزائدة.
     # EN: Remove obsolete Employee-name display fields.
     """
-    دوال غير مستخدمة حالياً، تم الاحتفاظ بها للتوافقية
-    Unused functions kept for backwards compatibility
+    AR: تنفيذ إزالة `extra` الموظف `name` `display` الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute remove extra employee name display fields within the `setup_leave_and_shift` module.
     """
     pass
 
@@ -1360,19 +1426,23 @@ LEAVE_LAYOUT_PROPERTY_NAMES = {
 
 def restore_original_leave_ui_keep_workflow():
     """
-    AR:
-        يعيد واجهة Leave Application إلى حقول وترتيب مشروع Masar Requests الأصلي،
-        ويحذف فقط حقول التخطيط والتخصيصات البصرية التي أضيفت لاحقاً.
-        بعد ذلك يعيد بناء سير العمل بالتعديلات المطلوبة:
-        - ظهور إجراءات البديل والمسؤول المباشر بناءً على المستخدم الفعلي.
-        - قدرة HR Manager على الاعتماد النهائي أو الرفض من أي مرحلة نشطة، بما فيها المسودة.
-        لا يغيّر ملف صلاحيات Leave Application ولا بيانات الطلبات.
+    AR: تنفيذ استعادة `original` الإجازة `ui` `keep` سير العمل ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute restore original leave ui keep workflow within the `setup_leave_and_shift` module.
 
-    EN:
-        Restores the original Masar Requests Leave Application fields and order,
-        removes only later UI-layout additions, then rebuilds the workflow
-        with the required manager transitions and HR override from every active stage.
-        It does not alter the Leave Application permission module or request data.
+    DETAILS / التفاصيل:
+    AR:
+            يعيد واجهة Leave Application إلى حقول وترتيب مشروع Masar Requests الأصلي،
+            ويحذف فقط حقول التخطيط والتخصيصات البصرية التي أضيفت لاحقاً.
+            بعد ذلك يعيد بناء سير العمل بالتعديلات المطلوبة:
+            - ظهور إجراءات البديل والمسؤول المباشر بناءً على المستخدم الفعلي.
+            - قدرة HR Manager على الاعتماد النهائي أو الرفض من أي مرحلة نشطة، بما فيها المسودة.
+            لا يغيّر ملف صلاحيات Leave Application ولا بيانات الطلبات.
+
+        EN:
+            Restores the original Masar Requests Leave Application fields and order,
+            removes only later UI-layout additions, then rebuilds the workflow
+            with the required manager transitions and HR override from every active stage.
+            It does not alter the Leave Application permission module or request data.
     """
     deleted_property_setters = 0
     deleted_layout_fields = 0
@@ -1440,3 +1510,413 @@ def restore_original_leave_ui_keep_workflow():
         "permissions_file_changed": False,
         "leave_data_changed": False,
     }
+
+# MASAR_LEAVE_LAYOUT_SOURCE_V21_8
+def _masar_apply_leave_layout_v218():
+    """
+    AR: تنفيذ `masar` تطبيق الإجازة `layout` `v218` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute masar apply leave layout v218 within the `setup_leave_and_shift` module.
+
+    DETAILS / التفاصيل:
+    Keep Leave Application on one page with dates always visible:
+        - right column: From Date, To Date, partial-leave options;
+        - left column: Reason and Total Leave Days.
+    """
+    import json
+
+    import frappe
+    from frappe.custom.doctype.property_setter.property_setter import (
+        make_property_setter,
+    )
+
+    doctype = "Leave Application"
+    meta = frappe.get_meta(doctype, cached=False)
+
+    existing_fields = [
+        field.fieldname
+        for field in meta.fields
+        if field.fieldname
+    ]
+    existing_set = set(existing_fields)
+
+    preferred_order = [
+        "workflow_state",
+        "naming_series",
+
+        "employee",
+        "custom_substitute_employee",
+        "column_break_4",
+        "leave_type",
+
+        "company",
+        "department",
+        "employee_name",
+
+        "section_break_5",
+
+        "from_date",
+        "to_date",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "custom_partial_leave_date",
+        "custom_partial_from_time_ar",
+        "custom_partial_to_time_ar",
+        "custom_partial_time_ar_display",
+        "custom_leave_hours",
+        "custom_shift_hours",
+
+        "column_break1",
+        "description",
+        "total_leave_days",
+
+        "half_day_date",
+        "custom_leave_period",
+        "from_time",
+        "to_time",
+        "leave_balance",
+
+        "custom_balance_section",
+        "custom_actual_leave_balance",
+        "custom_balance_after_this_request",
+        "custom_balance_manager_column_break",
+        "custom_direct_manager_employee",
+        "custom_direct_manager_approval",
+        "custom_direct_manager_user",
+        "custom_direct_manager_secretary_employee",
+        "custom_direct_manager_secretary_user",
+        "custom_direct_manager_section",
+
+        "custom_substitute_section",
+        "custom_substitute_approval",
+        "custom_substitute_user",
+
+        "section_break_7",
+        "leave_approver",
+        "leave_approver_name",
+        "follow_via_email",
+        "column_break_18",
+        "posting_date",
+        "status",
+
+        "sb_other_details",
+        "salary_slip",
+        "color",
+        "column_break_17",
+        "letter_head",
+        "amended_from",
+    ]
+
+    final_order = [
+        fieldname
+        for fieldname in preferred_order
+        if fieldname in existing_set
+    ]
+
+    for fieldname in existing_fields:
+        if fieldname not in final_order:
+            final_order.append(fieldname)
+
+    make_property_setter(
+        doctype=doctype,
+        fieldname=None,
+        property="field_order",
+        value=json.dumps(final_order),
+        property_type="Text",
+        for_doctype=True,
+    )
+
+    fields_to_show = (
+        "section_break_5",
+        "column_break1",
+        "from_date",
+        "to_date",
+        "description",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "total_leave_days",
+        "custom_substitute_employee",
+    )
+
+    for fieldname in fields_to_show:
+        if not meta.has_field(fieldname):
+            continue
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname=fieldname,
+            property="hidden",
+            value=0,
+            property_type="Check",
+        )
+
+    core_fields = (
+        "from_date",
+        "to_date",
+        "description",
+    )
+
+    for fieldname in core_fields:
+        if not meta.has_field(fieldname):
+            continue
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname=fieldname,
+            property="depends_on",
+            value="",
+            property_type="Data",
+        )
+
+    if meta.has_field("section_break_5"):
+        make_property_setter(
+            doctype=doctype,
+            fieldname="section_break_5",
+            property="label",
+            value="Dates and Reason",
+            property_type="Data",
+        )
+
+    frappe.clear_cache(doctype=doctype)
+    frappe.clear_cache()
+
+    return {
+        "doctype": doctype,
+        "field_order": final_order,
+    }
+
+
+# Override both historical setup entry points so future installs/migrations
+# cannot restore the old hidden-date layout.
+def apply_leave_application_layout_preferences():
+    """
+    AR: تنفيذ تطبيق الإجازة `application` `layout` `preferences` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute apply leave application layout preferences within the `setup_leave_and_shift` module.
+    """
+    return _masar_apply_leave_layout_v218()
+
+
+def reorder_leave_application_fields():
+    """
+    AR: تنفيذ `reorder` الإجازة `application` الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute reorder leave application fields within the `setup_leave_and_shift` module.
+    """
+    return _masar_apply_leave_layout_v218()
+
+
+# MASAR_LEAVE_LAYOUT_SOURCE_V21_8_1
+def _masar_apply_leave_layout_v218():
+    """
+    AR: تنفيذ `masar` تطبيق الإجازة `layout` `v218` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute masar apply leave layout v218 within the `setup_leave_and_shift` module.
+
+    DETAILS / التفاصيل:
+    Final Leave Application layout:
+        - partial options first;
+        - normal From/To dates immediately below the three options;
+        - normal dates are hidden when any partial option is selected.
+    """
+    import json
+
+    import frappe
+    from frappe.custom.doctype.property_setter.property_setter import (
+        make_property_setter,
+    )
+
+    doctype = "Leave Application"
+    meta = frappe.get_meta(doctype, cached=False)
+
+    existing_fields = [
+        field.fieldname
+        for field in meta.fields
+        if field.fieldname
+    ]
+    existing_set = set(existing_fields)
+
+    preferred_order = [
+        "workflow_state",
+        "naming_series",
+
+        "employee",
+        "custom_substitute_employee",
+        "column_break_4",
+        "leave_type",
+
+        "company",
+        "department",
+        "employee_name",
+
+        "section_break_5",
+
+        # The three partial-leave options.
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+
+        # Normal date range must appear last under the three options.
+        "from_date",
+        "to_date",
+
+        # Fields used by the selected partial-leave mode.
+        "half_day_date",
+        "custom_partial_leave_date",
+        "custom_partial_from_time_ar",
+        "custom_partial_to_time_ar",
+        "custom_partial_time_ar_display",
+        "custom_leave_hours",
+        "custom_shift_hours",
+        "custom_leave_period",
+        "from_time",
+        "to_time",
+
+        "column_break1",
+        "description",
+        "total_leave_days",
+        "leave_balance",
+
+        "custom_balance_section",
+        "custom_actual_leave_balance",
+        "custom_balance_after_this_request",
+        "custom_balance_manager_column_break",
+        "custom_direct_manager_employee",
+        "custom_direct_manager_approval",
+        "custom_direct_manager_user",
+        "custom_direct_manager_secretary_employee",
+        "custom_direct_manager_secretary_user",
+        "custom_direct_manager_section",
+
+        "custom_substitute_section",
+        "custom_substitute_approval",
+        "custom_substitute_user",
+
+        "section_break_7",
+        "leave_approver",
+        "leave_approver_name",
+        "follow_via_email",
+        "column_break_18",
+        "posting_date",
+        "status",
+
+        "sb_other_details",
+        "salary_slip",
+        "color",
+        "column_break_17",
+        "letter_head",
+        "amended_from",
+    ]
+
+    final_order = [
+        fieldname
+        for fieldname in preferred_order
+        if fieldname in existing_set
+    ]
+
+    for fieldname in existing_fields:
+        if fieldname not in final_order:
+            final_order.append(fieldname)
+
+    make_property_setter(
+        doctype=doctype,
+        fieldname=None,
+        property="field_order",
+        value=json.dumps(final_order),
+        property_type="Text",
+        for_doctype=True,
+    )
+
+    always_visible = (
+        "section_break_5",
+        "column_break1",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "description",
+        "total_leave_days",
+        "custom_substitute_employee",
+    )
+
+    for fieldname in always_visible:
+        if not meta.has_field(fieldname):
+            continue
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname=fieldname,
+            property="hidden",
+            value=0,
+            property_type="Check",
+        )
+
+    normal_date_condition = (
+        "eval:!doc.half_day && !doc.quarter_day && !doc.is_hourly"
+    )
+
+    for fieldname in ("from_date", "to_date"):
+        if not meta.has_field(fieldname):
+            continue
+
+        make_property_setter(
+            doctype=doctype,
+            fieldname=fieldname,
+            property="hidden",
+            value=0,
+            property_type="Check",
+        )
+        make_property_setter(
+            doctype=doctype,
+            fieldname=fieldname,
+            property="depends_on",
+            value=normal_date_condition,
+            property_type="Data",
+        )
+
+    if meta.has_field("description"):
+        make_property_setter(
+            doctype=doctype,
+            fieldname="description",
+            property="hidden",
+            value=0,
+            property_type="Check",
+        )
+        make_property_setter(
+            doctype=doctype,
+            fieldname="description",
+            property="depends_on",
+            value="",
+            property_type="Data",
+        )
+
+    if meta.has_field("section_break_5"):
+        make_property_setter(
+            doctype=doctype,
+            fieldname="section_break_5",
+            property="label",
+            value="Dates and Reason",
+            property_type="Data",
+        )
+
+    frappe.clear_cache(doctype=doctype)
+    frappe.clear_cache()
+
+    return {
+        "doctype": doctype,
+        "field_order": final_order,
+        "normal_date_condition": normal_date_condition,
+    }
+
+
+def apply_leave_application_layout_preferences():
+    """
+    AR: تنفيذ تطبيق الإجازة `application` `layout` `preferences` ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute apply leave application layout preferences within the `setup_leave_and_shift` module.
+    """
+    return _masar_apply_leave_layout_v218()
+
+
+def reorder_leave_application_fields():
+    """
+    AR: تنفيذ `reorder` الإجازة `application` الحقول ضمن وحدة `setup_leave_and_shift`.
+    EN: Execute reorder leave application fields within the `setup_leave_and_shift` module.
+    """
+    return _masar_apply_leave_layout_v218()

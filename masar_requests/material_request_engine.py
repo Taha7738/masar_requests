@@ -1,4 +1,9 @@
-"""Native Material Request validation, notification, and shortage splitting.
+"""
+AR: محرك قواعد الأعمال والمعالجة ضمن الوحدة `material_request_engine`.
+EN: Business-rule and processing engine for the `material_request_engine` module.
+
+DETAILS / التفاصيل:
+Native Material Request validation, notification, and shortage splitting.
 
 AR: بديل قابل للاختبار والصيانة عن Server Script النصي القديم.
 EN: Testable and maintainable replacement for the legacy text Server Script.
@@ -38,22 +43,26 @@ FORWARD_STATES_AFTER_STOCK = {
 
 def allow_zero_valuation_for_internal_material_issue(doc, method=None):
     """
+    AR: تنفيذ `allow` `zero` `valuation` `for` `internal` المواد الصرف ضمن وحدة `material_request_engine`.
+    EN: Execute allow zero valuation for internal material issue within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
     AR:
-        السماح بسعر تقييم صفري فقط لأسطر Stock Entry من نوع Material Issue
-        والمرتبطة فعليًا بطلب مواد داخلي. لا يغيّر هذا أسعار طلب المواد،
-        ولا يطبق على الاستلام أو الشراء أو التحويل.
+            السماح بسعر تقييم صفري فقط لأسطر Stock Entry من نوع Material Issue
+            والمرتبطة فعليًا بطلب مواد داخلي. لا يغيّر هذا أسعار طلب المواد،
+            ولا يطبق على الاستلام أو الشراء أو التحويل.
 
-        هذا الخيار لا يفرض سعرًا صفريًا عندما يوجد تقييم فعلي للصنف؛
-        بل يسمح فقط بإكمال الحركة إذا لم يجد ERPNext تقييمًا سابقًا.
+            هذا الخيار لا يفرض سعرًا صفريًا عندما يوجد تقييم فعلي للصنف؛
+            بل يسمح فقط بإكمال الحركة إذا لم يجد ERPNext تقييمًا سابقًا.
 
-    EN:
-        Permit zero valuation only for Material Issue Stock Entry rows that
-        are actually linked to an internal Material Request. This does not
-        change Material Request prices and does not apply to receipts,
-        purchases, or transfers.
+        EN:
+            Permit zero valuation only for Material Issue Stock Entry rows that
+            are actually linked to an internal Material Request. This does not
+            change Material Request prices and does not apply to receipts,
+            purchases, or transfers.
 
-        This does not force a zero rate when ERPNext already has a valuation;
-        it only permits submission when no prior valuation can be resolved.
+            This does not force a zero rate when ERPNext already has a valuation;
+            it only permits submission when no prior valuation can be resolved.
     """
     if getattr(doc, "purpose", None) != "Material Issue":
         return
@@ -79,7 +88,13 @@ def allow_zero_valuation_for_internal_material_issue(doc, method=None):
 def before_save_material_request(doc, method=None):
     # AR: تشغيل قواعد حماية وانشطار طلب المواد قبل الحفظ.
     # EN: Run Material Request protection and splitting rules before save.
-    """Apply server-side business rules before each Material Request save."""
+    """
+    AR: تنفيذ معالجة ما قبل حفظ المواد الطلب ضمن وحدة `material_request_engine`.
+    EN: Execute before save material request within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
+    Apply server-side business rules before each Material Request save.
+    """
     # AR: حماية خادمية تمنع HR User من التعديل أو تنفيذ إجراءات سير العمل.
     # EN: Server-side guard blocks HR User from editing or running workflow actions.
     from masar_requests.hr_user_read_only import enforce_hr_user_read_only
@@ -97,7 +112,13 @@ def before_save_material_request(doc, method=None):
 def set_manager_level_flag(doc):
     # AR: تحديد ما إذا كان المدير المباشر من القيادة العليا.
     # EN: Mark whether the direct manager is top management.
-    """Mark whether the direct manager belongs to top management."""
+    """
+    AR: تنفيذ تعيين المدير `level` `flag` ضمن وحدة `material_request_engine`.
+    EN: Execute set manager level flag within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
+    Mark whether the direct manager belongs to top management.
+    """
     doc.custom_manager_is_top_level = 0
 
     if not doc.reports_to:
@@ -116,7 +137,13 @@ def set_manager_level_flag(doc):
 def freeze_original_quantities(doc):
     # AR: حفظ الكميات المطلوبة الأصلية قبل تعديل المخزون.
     # EN: Preserve originally requested quantities before stock edits.
-    """Keep the employee-requested quantity for later shortage calculation."""
+    """
+    AR: تنفيذ `freeze` `original` `quantities` ضمن وحدة `material_request_engine`.
+    EN: Execute freeze original quantities within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
+    Keep the employee-requested quantity for later shortage calculation.
+    """
     if doc.workflow_state not in {MR_STATE_DRAFT, None, ""}:
         return
 
@@ -128,7 +155,13 @@ def freeze_original_quantities(doc):
 def validate_protected_item_values(doc, old_doc):
     # AR: منع تعديل الكمية والسعر والمبلغ دون الصلاحية المطلوبة.
     # EN: Protect quantity, rate, and amount from unauthorized edits.
-    """Enforce quantity and financial locks on the server."""
+    """
+    AR: تنفيذ التحقق من صحة `protected` الصنف `values` ضمن وحدة `material_request_engine`.
+    EN: Execute validate protected item values within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
+    Enforce quantity and financial locks on the server.
+    """
     if not old_doc:
         return
 
@@ -190,7 +223,13 @@ def validate_protected_item_values(doc, old_doc):
 def notify_workflow_state_change(doc, old_doc):
     # AR: إرسال الإشعارات عند تغير حالة سير عمل طلب المواد.
     # EN: Send notifications when Material Request workflow state changes.
-    """Create notifications after a workflow state change."""
+    """
+    AR: تنفيذ إشعار سير العمل الحالة `change` ضمن وحدة `material_request_engine`.
+    EN: Execute notify workflow state change within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
+    Create notifications after a workflow state change.
+    """
     if not old_doc or old_doc.workflow_state == doc.workflow_state:
         return
 
@@ -227,6 +266,10 @@ def notify_workflow_state_change(doc, old_doc):
 def _notification_targets_and_subject(doc):
     # AR: تحديد مستلمي إشعار طلب المواد ونص الإشعار.
     # EN: Resolve Material Request notification recipients and subject.
+    """
+    AR: تنفيذ الإشعار `targets` `and` `subject` ضمن وحدة `material_request_engine`.
+    EN: Execute notification targets and subject within the `material_request_engine` module.
+    """
     state = doc.workflow_state
     targets = {doc.owner}
     principals = set()
@@ -268,7 +311,13 @@ def _notification_targets_and_subject(doc):
 def split_stock_shortage(doc, old_doc):
     # AR: فصل الكميات الناقصة إلى طلب شراء تلقائي.
     # EN: Split stock shortages into an automatic Purchase request.
-    """Split unavailable quantities into an automatically generated purchase request."""
+    """
+    AR: تنفيذ `split` المخزون `shortage` ضمن وحدة `material_request_engine`.
+    EN: Execute split stock shortage within the `material_request_engine` module.
+
+    DETAILS / التفاصيل:
+    Split unavailable quantities into an automatically generated purchase request.
+    """
     if (
         not old_doc
         or old_doc.workflow_state != MR_STATE_PENDING_STOCK_CHECK
@@ -333,6 +382,10 @@ def split_stock_shortage(doc, old_doc):
 def _create_purchase_request_for_shortages(source_doc, shortages):
     # AR: إنشاء طلب شراء مستقل للكميات غير المتوفرة.
     # EN: Create a separate Purchase request for unavailable quantities.
+    """
+    AR: تنفيذ إنشاء `purchase` الطلب `for` `shortages` ضمن وحدة `material_request_engine`.
+    EN: Execute create purchase request for shortages within the `material_request_engine` module.
+    """
     new_doc = frappe.new_doc("Material Request")
     new_doc.update(
         {

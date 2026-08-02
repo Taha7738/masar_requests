@@ -1,3 +1,6 @@
+// AR: يحتوي هذا الملف على منطق واجهة المستخدم مع توثيق ثنائي اللغة للدوال والمعالجات.
+// EN: This file contains user-interface logic with bilingual documentation for functions and handlers.
+
 // ============================================================================
 // AR: واجهة طلب الإجازة في تطبيق Masar Requests.
 //     يدعم نصف يوم، ربع يوم، الإجازة بالساعات، وفلترة الموظف البديل
@@ -27,6 +30,8 @@ frappe.ui.form.on("Leave Application", {
         masar_requests_set_substitute_employee_query(frm);
     },
 
+    // AR: تنفيذ معالج `refresh` ضمن هذا الملف.
+    // EN: Execute the `refresh` handler within this file.
     refresh(frm) {
         masar_requests_inject_leave_application_styles();
         masar_requests_decorate_leave_application_form(frm);
@@ -848,73 +853,19 @@ function masar_requests_schedule_precise_leave_balance(frm) {
 // AR: جلب وردية الموظف في التاريخ المحدد.
 // EN: Fetch the Employee shift for the selected date.
 async function masar_requests_get_employee_shift(employee, date) {
-    const assignments = await frappe.db.get_list("Shift Assignment", {
-        filters: [
-            ["employee", "=", employee],
-            ["docstatus", "=", 1],
-            ["start_date", "<=", date]
-        ],
-        fields: ["name", "shift_type", "start_date", "end_date"],
-        order_by: "start_date desc",
-        limit: 20
+    // AR: استخدام API موحدة حتى تتطابق الإجازة والمهام والبصمة مع نفس الوردية.
+    // EN: Use one API so leave, duty, and checkins resolve the same shift window.
+    if (!employee || !date) return null;
+
+    const response = await frappe.call({
+        method: "masar_requests.overrides.shift_type.get_employee_shift_window",
+        args: {
+            employee: employee,
+            date: date,
+        },
     });
 
-    let shift_type = null;
-
-    if (assignments && assignments.length) {
-        const valid_assignment = assignments.find(row => {
-            return !row.end_date || row.end_date >= date;
-        });
-
-        if (valid_assignment) {
-            shift_type = valid_assignment.shift_type;
-        }
-    }
-
-    if (!shift_type) {
-        const employee_value = await frappe.db.get_value(
-            "Employee",
-            employee,
-            ["default_shift"]
-        );
-
-        if (
-            employee_value &&
-            employee_value.message &&
-            employee_value.message.default_shift
-        ) {
-            shift_type = employee_value.message.default_shift;
-        }
-    }
-
-    if (!shift_type) return null;
-
-    // Fetch the entire shift document to access the child table
-    const shift_doc = await frappe.db.get_doc("Shift Type", shift_type);
-
-    if (!shift_doc) return null;
-
-    let actual_start_time = shift_doc.start_time;
-    let actual_end_time = shift_doc.end_time;
-
-    // Extract the day name strictly in English to match the stored values in the table
-    const day_name = moment(date).locale('en').format('dddd');
-
-    // Search the child table for custom times specifically for this day
-    if (shift_doc.custom_shift_times && shift_doc.custom_shift_times.length > 0) {
-        const custom_day = shift_doc.custom_shift_times.find(row => row.day_of_week === day_name);
-        
-        if (custom_day) {
-            actual_start_time = custom_day.start_time;
-            actual_end_time = custom_day.end_time;
-        }
-    }
-
-    return {
-        shift_type: shift_type,
-        start_time: actual_start_time,
-        end_time: actual_end_time
-    };
+    return response && response.message ? response.message : null;
 }
 
 // ======================================================
@@ -1317,6 +1268,8 @@ frappe.ui.form.on("User", {
 // Realtime Notification Sound
 // ======================================================
 
+// AR: تنفيذ معالج `$` ضمن هذا الملف.
+// EN: Execute the `$` handler within this file.
 $(document).ready(function () {
     frappe.realtime.on("masar_requests_sound", (data) => {
         frappe.utils.play_sound("alert");
@@ -1341,12 +1294,16 @@ function masar_requests_leave_is_hr_user_read_only() {
     );
 }
 
+// AR: تنفيذ معالج `masar_requests_leave_is_personal_request` ضمن هذا الملف.
+// EN: Execute the `masar_requests_leave_is_personal_request` handler within this file.
 function masar_requests_leave_is_personal_request(frm) {
     // AR: الطلب الجديد أو المملوك للمستخدم يعد طلب إجازة شخصياً.
     // EN: A new request or one owned by the current user is a personal leave request.
     return Boolean(frm.is_new() || frm.doc.owner === frappe.session.user);
 }
 
+// AR: تنفيذ معالج `masar_requests_leave_apply_hr_user_read_only` ضمن هذا الملف.
+// EN: Execute the `masar_requests_leave_apply_hr_user_read_only` handler within this file.
 function masar_requests_leave_apply_hr_user_read_only(frm) {
     // AR: تقفل طلبات الآخرين فقط، ويظل طلب المستخدم الشخصي قابلاً للتعامل الطبيعي.
     // EN: Lock other users' requests only; keep the user's personal request fully functional.
@@ -1381,3 +1338,260 @@ function masar_requests_leave_apply_hr_user_read_only(frm) {
         });
     }, 0);
 }
+
+// MASAR_LEAVE_LAYOUT_V21_7
+// AR: تنفيذ معالج `masar_v217_show_leave_core_fields` ضمن هذا الملف.
+// EN: Execute the `masar_v217_show_leave_core_fields` handler within this file.
+function masar_v217_show_leave_core_fields(frm) {
+    const fields = [
+        "employee",
+        "leave_type",
+        "custom_substitute_employee",
+        "half_day",
+        "custom_quarter_day",
+        "custom_is_quarter_day",
+        "custom_hourly_leave",
+        "custom_is_hourly_leave",
+        "from_date",
+        "to_date",
+        "description",
+        "reason",
+    ];
+
+    fields.forEach((fieldname) => {
+        if (!frm.fields_dict[fieldname]) return;
+        frm.set_df_property(fieldname, "hidden", 0);
+        frm.set_df_property(fieldname, "depends_on", "");
+        frm.refresh_field(fieldname);
+    });
+
+    if (
+        frm.fields_dict.custom_substitute_employee
+        && frm.doc.employee
+    ) {
+        frm.set_query("custom_substitute_employee", () => ({
+            query: (
+                "masar_requests.leave_application_permissions."
+                + "get_same_department_substitute_employees"
+            ),
+            filters: {
+                employee: frm.doc.employee,
+            },
+        }));
+    }
+}
+
+frappe.ui.form.on("Leave Application", {
+    // AR: تنفيذ معالج `refresh` ضمن هذا الملف.
+    // EN: Execute the `refresh` handler within this file.
+    refresh(frm) {
+        masar_v217_show_leave_core_fields(frm);
+    },
+    // AR: تنفيذ معالج `employee` ضمن هذا الملف.
+    // EN: Execute the `employee` handler within this file.
+    employee(frm) {
+        masar_v217_show_leave_core_fields(frm);
+    },
+});
+
+// MASAR_LEAVE_LAYOUT_CLIENT_V21_8
+// AR: تنفيذ معالج `masar_v218_force_leave_layout` ضمن هذا الملف.
+// EN: Execute the `masar_v218_force_leave_layout` handler within this file.
+function masar_v218_force_leave_layout(frm) {
+    const structuralFields = [
+        "section_break_5",
+        "column_break1",
+    ];
+
+    const alwaysVisibleFields = [
+        "from_date",
+        "to_date",
+        "description",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "total_leave_days",
+        "custom_substitute_employee",
+    ];
+
+    [...structuralFields, ...alwaysVisibleFields].forEach((fieldname) => {
+        const field = frm.fields_dict[fieldname];
+        if (!field) return;
+
+        frm.set_df_property(fieldname, "hidden", 0);
+
+        if (
+            fieldname === "from_date"
+            || fieldname === "to_date"
+            || fieldname === "description"
+        ) {
+            frm.set_df_property(fieldname, "depends_on", "");
+        }
+
+        frm.toggle_display(fieldname, true);
+
+        if (field.wrapper) {
+            field.wrapper
+                .removeClass("hide-control hidden")
+                .css("display", "");
+        }
+
+        frm.refresh_field(fieldname);
+    });
+
+    if (frm.layout && frm.layout.refresh_sections) {
+        frm.layout.refresh_sections();
+    }
+}
+
+// AR: تنفيذ معالج `masar_v218_schedule_leave_layout` ضمن هذا الملف.
+// EN: Execute the `masar_v218_schedule_leave_layout` handler within this file.
+function masar_v218_schedule_leave_layout(frm) {
+    [0, 100, 300, 700].forEach((delay) => {
+        setTimeout(() => {
+            if (!frm || frm.doc.doctype !== "Leave Application") return;
+            masar_v218_force_leave_layout(frm);
+        }, delay);
+    });
+}
+
+frappe.ui.form.on("Leave Application", {
+    // AR: تنفيذ معالج `setup` ضمن هذا الملف.
+    // EN: Execute the `setup` handler within this file.
+    setup(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `onload` ضمن هذا الملف.
+    // EN: Execute the `onload` handler within this file.
+    onload(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `onload_post_render` ضمن هذا الملف.
+    // EN: Execute the `onload_post_render` handler within this file.
+    onload_post_render(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `refresh` ضمن هذا الملف.
+    // EN: Execute the `refresh` handler within this file.
+    refresh(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `employee` ضمن هذا الملف.
+    // EN: Execute the `employee` handler within this file.
+    employee(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `leave_type` ضمن هذا الملف.
+    // EN: Execute the `leave_type` handler within this file.
+    leave_type(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `half_day` ضمن هذا الملف.
+    // EN: Execute the `half_day` handler within this file.
+    half_day(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `quarter_day` ضمن هذا الملف.
+    // EN: Execute the `quarter_day` handler within this file.
+    quarter_day(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `is_hourly` ضمن هذا الملف.
+    // EN: Execute the `is_hourly` handler within this file.
+    is_hourly(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+});
+
+// MASAR_LEAVE_LAYOUT_CLIENT_V21_8_1
+// AR: تنفيذ معالج `masar_v218_force_leave_layout` ضمن هذا الملف.
+// EN: Execute the `masar_v218_force_leave_layout` handler within this file.
+function masar_v218_force_leave_layout(frm) {
+    const partialSelected = Boolean(
+        frm.doc.half_day
+        || frm.doc.quarter_day
+        || frm.doc.is_hourly
+    );
+
+    const alwaysVisibleFields = [
+        "section_break_5",
+        "column_break1",
+        "half_day",
+        "quarter_day",
+        "is_hourly",
+        "description",
+        "total_leave_days",
+        "custom_substitute_employee",
+    ];
+
+    alwaysVisibleFields.forEach((fieldname) => {
+        const field = frm.fields_dict[fieldname];
+        if (!field) return;
+
+        frm.set_df_property(fieldname, "hidden", 0);
+
+        if (fieldname === "description") {
+            frm.set_df_property(fieldname, "depends_on", "");
+        }
+
+        frm.toggle_display(fieldname, true);
+        frm.refresh_field(fieldname);
+    });
+
+    ["from_date", "to_date"].forEach((fieldname) => {
+        const field = frm.fields_dict[fieldname];
+        if (!field) return;
+
+        frm.set_df_property(fieldname, "hidden", 0);
+        frm.set_df_property(
+            fieldname,
+            "depends_on",
+            "eval:!doc.half_day && !doc.quarter_day && !doc.is_hourly"
+        );
+        frm.toggle_display(fieldname, !partialSelected);
+        frm.refresh_field(fieldname);
+    });
+
+    if (frm.layout && frm.layout.refresh_sections) {
+        frm.layout.refresh_sections();
+    }
+}
+
+// AR: تنفيذ معالج `masar_v218_schedule_leave_layout` ضمن هذا الملف.
+// EN: Execute the `masar_v218_schedule_leave_layout` handler within this file.
+function masar_v218_schedule_leave_layout(frm) {
+    [0, 100, 300, 700].forEach((delay) => {
+        setTimeout(() => {
+            if (!frm || frm.doc.doctype !== "Leave Application") return;
+            masar_v218_force_leave_layout(frm);
+        }, delay);
+    });
+}
+
+frappe.ui.form.on("Leave Application", {
+    // AR: تنفيذ معالج `refresh` ضمن هذا الملف.
+    // EN: Execute the `refresh` handler within this file.
+    refresh(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `onload_post_render` ضمن هذا الملف.
+    // EN: Execute the `onload_post_render` handler within this file.
+    onload_post_render(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `half_day` ضمن هذا الملف.
+    // EN: Execute the `half_day` handler within this file.
+    half_day(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `quarter_day` ضمن هذا الملف.
+    // EN: Execute the `quarter_day` handler within this file.
+    quarter_day(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+    // AR: تنفيذ معالج `is_hourly` ضمن هذا الملف.
+    // EN: Execute the `is_hourly` handler within this file.
+    is_hourly(frm) {
+        masar_v218_schedule_leave_layout(frm);
+    },
+});

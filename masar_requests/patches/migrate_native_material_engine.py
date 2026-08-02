@@ -1,13 +1,24 @@
-"""Migrate existing sites from legacy Server Scripts to native Python hooks."""
+"""
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `migrate_native_material_engine` على المواقع القائمة.
+EN: Idempotent migration patch for applying `migrate_native_material_engine` changes to existing sites.
+
+DETAILS / التفاصيل:
+Migrate existing sites from legacy Server Scripts to native Python hooks.
+"""
 
 import frappe
 
 
 def execute():
-    """Remove obsolete scripts and correct workflow edit roles.
+    """
+    AR: تنفيذ تنفيذ ضمن وحدة `migrate_native_material_engine`.
+    EN: Execute execute within the `migrate_native_material_engine` module.
 
-    AR: Patch آمن للمواقع الحالية؛ لا يعيد بناء Workflow ولا يحذف المعاملات.
-    EN: Safe existing-site patch; it neither rebuilds the Workflow nor deletes requests.
+    DETAILS / التفاصيل:
+    Remove obsolete scripts and correct workflow edit roles.
+
+        AR: Patch آمن للمواقع الحالية؛ لا يعيد بناء Workflow ولا يحذف المعاملات.
+        EN: Safe existing-site patch; it neither rebuilds the Workflow nor deletes requests.
     """
     for script_name in (
         "Auto Share MR with Direct Supervisor masar_requests",
@@ -47,4 +58,3 @@ def execute():
                 )
 
     frappe.clear_cache(doctype="Material Request")
-

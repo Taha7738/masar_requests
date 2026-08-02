@@ -1,3 +1,8 @@
+"""
+AR: منطق الصلاحيات والتحكم في الوصول ضمن الوحدة `attendance_request_permissions`.
+EN: Permission and access-control logic for the `attendance_request_permissions` module.
+"""
+
 # ============================================================================
 # AR: صلاحيات وتحقق وإشعارات طلب المهمة الرسمية
 # EN: Official Duty permissions, validation, sharing, and notifications
@@ -75,18 +80,32 @@ LOCKED_REQUEST_FIELDS = (
 
 
 class _RichTextExtractor(HTMLParser):
-    """AR: استخراج النص الظاهر من HTML. EN: Extract visible text from rich HTML."""
+    """
+    AR: فئة `_RichTextExtractor` لتنظيم منطق الحضور الطلب الصلاحيات.
+    EN: Class `_RichTextExtractor` that organizes attendance request permissions logic.
+    """
 
     def __init__(self):
+        """
+        AR: تنفيذ `init` ضمن وحدة `attendance_request_permissions`.
+        EN: Execute init within the `attendance_request_permissions` module.
+        """
         super().__init__(convert_charrefs=True)
         self.parts = []
 
     def handle_data(self, data):
+        """
+        AR: تنفيذ `handle` `data` ضمن وحدة `attendance_request_permissions`.
+        EN: Execute handle data within the `attendance_request_permissions` module.
+        """
         self.parts.append(data)
 
 
 def _rich_text_has_content(value):
-    """AR: التحقق من أن المحرر يحتوي نصاً فعلياً. EN: Check rich text for visible content."""
+    """
+    AR: تنفيذ `rich` `text` التحقق من وجود `content` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute rich text has content within the `attendance_request_permissions` module.
+    """
     if not value:
         return False
 
@@ -107,26 +126,35 @@ def _rich_text_has_content(value):
 
 
 def _roles(user=None):
-    """AR: جلب أدوار المستخدم. EN: Return user roles as a set."""
+    """
+    AR: تنفيذ `roles` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute roles within the `attendance_request_permissions` module.
+    """
     return set(frappe.get_roles(user or frappe.session.user))
 
 
 def is_system_administrator(user=None):
-    """AR: Administrator أو System Manager. EN: Administrator or System Manager."""
+    """
+    AR: تنفيذ التحقق من كون `system` `administrator` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is system administrator within the `attendance_request_permissions` module.
+    """
     user = user or frappe.session.user
     return user == "Administrator" or SYSTEM_MANAGER_ROLE in _roles(user)
 
 
 def is_hr_manager_or_admin(user=None):
-    """AR: مستخدم مخول بالاعتماد النهائي. EN: User allowed to perform final approval."""
+    """
+    AR: تنفيذ التحقق من كون `hr` المدير `or` `admin` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is hr manager or admin within the `attendance_request_permissions` module.
+    """
     user = user or frappe.session.user
     return is_system_administrator(user) or HR_MANAGER_ROLE in _roles(user)
 
 
 def is_hr_read_only_user(user=None):
     """
-    AR: تحديد حساب HR User غير الإداري؛ يستثنى طلبه الشخصي لاحقًا في فحص الصلاحية.
-    EN: Identify a non-privileged HR User; personal requests are exempted later.
+    AR: تنفيذ التحقق من كون `hr` القراءة `only` المستخدم ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is hr read only user within the `attendance_request_permissions` module.
     """
     user = user or frappe.session.user
     roles = _roles(user)
@@ -139,14 +167,20 @@ def is_hr_read_only_user(user=None):
 
 
 def _employee_user(employee):
-    """AR: حساب المستخدم المرتبط بالموظف. EN: User linked to an Employee."""
+    """
+    AR: تنفيذ الموظف المستخدم ضمن وحدة `attendance_request_permissions`.
+    EN: Execute employee user within the `attendance_request_permissions` module.
+    """
     if not employee:
         return None
     return frappe.db.get_value("Employee", employee, "user_id")
 
 
 def _applicant_user(doc):
-    """AR: تحديد حساب مقدم الطلب. EN: Resolve the request applicant User."""
+    """
+    AR: تنفيذ `applicant` المستخدم ضمن وحدة `attendance_request_permissions`.
+    EN: Execute applicant user within the `attendance_request_permissions` module.
+    """
     return (
         doc.get("custom_applicant_user")
         or _employee_user(doc.get("employee"))
@@ -155,25 +189,37 @@ def _applicant_user(doc):
 
 
 def _is_applicant(doc, user=None):
-    """AR: هل المستخدم مقدم الطلب؟ EN: Is the user the request applicant?"""
+    """
+    AR: تنفيذ التحقق من كون `applicant` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is applicant within the `attendance_request_permissions` module.
+    """
     user = user or frappe.session.user
     return user in {_applicant_user(doc), doc.get("owner")}
 
 
 def _is_substitute(doc, user=None):
-    """AR: هل المستخدم هو البديل المختار؟ EN: Is the user the selected substitute?"""
+    """
+    AR: تنفيذ التحقق من كون `substitute` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is substitute within the `attendance_request_permissions` module.
+    """
     user = user or frappe.session.user
     return bool(user and user == doc.get("custom_substitute_user"))
 
 
 def _is_direct_manager(doc, user=None):
-    """AR: هل المستخدم هو المسؤول المباشر؟ EN: Is the user the direct manager?"""
+    """
+    AR: تنفيذ التحقق من كون `direct` المدير ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is direct manager within the `attendance_request_permissions` module.
+    """
     user = user or frappe.session.user
     return bool(user and user == doc.get("custom_direct_manager_user"))
 
 
 def _is_related_user(doc, user):
-    """AR: هل المستخدم طرف مرتبط بالطلب؟ EN: Is the user related to this request?"""
+    """
+    AR: تنفيذ التحقق من كون `related` المستخدم ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is related user within the `attendance_request_permissions` module.
+    """
     return bool(
         doc.get("owner") == user
         or doc.get("custom_applicant_user") == user
@@ -185,8 +231,8 @@ def _is_related_user(doc, user):
 
 def attendance_request_query(user=None):
     """
-    AR: HR Manager وHR User يشاهدون كل الطلبات؛ بقية المستخدمين يشاهدون المرتبط فقط.
-    EN: HR Manager and HR User see all requests; others see related requests only.
+    AR: تنفيذ الحضور الطلب `query` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute attendance request query within the `attendance_request_permissions` module.
     """
     user = user or frappe.session.user
     if is_hr_manager_or_admin(user) or is_hr_read_only_user(user):
@@ -214,8 +260,8 @@ def attendance_request_has_permission(
     permission_type=None,
 ):
     """
-    AR: HR User يعرض ويطبع طلبات الآخرين، ويتعامل مع طلبه الشخصي حسب المرحلة.
-    EN: HR User reads/prints others' requests and handles a personal request by stage.
+    AR: تنفيذ الحضور الطلب التحقق من وجود صلاحية ضمن وحدة `attendance_request_permissions`.
+    EN: Execute attendance request has permission within the `attendance_request_permissions` module.
     """
     user = user or frappe.session.user
     ptype = permission_type or ptype or "read"
@@ -270,7 +316,10 @@ def attendance_request_has_permission(
 
 
 def _current_user_employee(user=None, required=True):
-    """AR: جلب سجل الموظف النشط للمستخدم. EN: Resolve the user's active Employee record."""
+    """
+    AR: تنفيذ الحالي المستخدم الموظف ضمن وحدة `attendance_request_permissions`.
+    EN: Execute current user employee within the `attendance_request_permissions` module.
+    """
     user = user or frappe.session.user
     employees = frappe.get_all(
         "Employee",
@@ -300,7 +349,10 @@ def _current_user_employee(user=None, required=True):
 
 @frappe.whitelist()
 def get_current_user_employee():
-    """AR: API لتهيئة الموظف في الطلب الجديد. EN: API used to initialize a new request."""
+    """
+    AR: تنفيذ استرجاع الحالي المستخدم الموظف ضمن وحدة `attendance_request_permissions`.
+    EN: Execute get current user employee within the `attendance_request_permissions` module.
+    """
     if frappe.session.user == "Guest":
         frappe.throw(_("Please sign in before creating an attendance request."))
     employee = _current_user_employee(required=False)
@@ -309,8 +361,8 @@ def get_current_user_employee():
 
 def set_request_employee_from_session(doc):
     """
-    AR: فرض موظف المستخدم عند الإنشاء فقط، وعدم تطبيقه على منفذي الموافقات.
-    EN: Enforce the user's Employee only at creation, never on workflow approvers.
+    AR: تنفيذ تعيين الطلب الموظف `from` `session` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute set request employee from session within the `attendance_request_permissions` module.
     """
     user = frappe.session.user
 
@@ -362,11 +414,18 @@ def set_request_employee_from_session(doc):
 
 
 def _is_empty_value(value):
+    """
+    AR: تنفيذ التحقق من كون `empty` `value` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is empty value within the `attendance_request_permissions` module.
+    """
     return value is None or value == ""
 
 
 def _normalize_time_for_compare(value):
-    """AR: توحيد قيم Time للمقارنة. EN: Normalize Time values before comparison."""
+    """
+    AR: تنفيذ توحيد الوقت `for` `compare` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute normalize time for compare within the `attendance_request_permissions` module.
+    """
     if _is_empty_value(value):
         return None
     if isinstance(value, timedelta):
@@ -408,7 +467,10 @@ def _normalize_time_for_compare(value):
 
 
 def _normalize_field_value(field, value):
-    """AR: توحيد التاريخ والوقت قبل المقارنة. EN: Normalize dates/times before comparison."""
+    """
+    AR: تنفيذ توحيد الحقل `value` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute normalize field value within the `attendance_request_permissions` module.
+    """
     if _is_empty_value(value):
         return None
 
@@ -438,6 +500,10 @@ def _normalize_field_value(field, value):
 
 
 def _same_field_value(doc, previous, fieldname):
+    """
+    AR: تنفيذ `same` الحقل `value` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute same field value within the `attendance_request_permissions` module.
+    """
     field = doc.meta.get_field(fieldname)
     return _normalize_field_value(field, previous.get(fieldname)) == _normalize_field_value(
         field, doc.get(fieldname)
@@ -445,7 +511,10 @@ def _same_field_value(doc, previous, fieldname):
 
 
 def _get_previous_doc(doc):
-    """AR: النسخة السابقة للمستند. EN: Return the saved document snapshot."""
+    """
+    AR: تنفيذ استرجاع `previous` المستند ضمن وحدة `attendance_request_permissions`.
+    EN: Execute get previous doc within the `attendance_request_permissions` module.
+    """
     previous = doc.get_doc_before_save()
     if previous:
         return previous
@@ -455,7 +524,10 @@ def _get_previous_doc(doc):
 
 
 def _get_previous_workflow_state(doc):
-    """AR: حالة سير العمل السابقة. EN: Return the previous workflow state."""
+    """
+    AR: تنفيذ استرجاع `previous` سير العمل الحالة ضمن وحدة `attendance_request_permissions`.
+    EN: Execute get previous workflow state within the `attendance_request_permissions` module.
+    """
     flagged = getattr(doc.flags, "masar_previous_workflow_state", None)
     if flagged is not None:
         return flagged
@@ -465,8 +537,8 @@ def _get_previous_workflow_state(doc):
 
 def _can_reselect_substitute(doc, previous):
     """
-    AR: السماح لمقدم الطلب بتغيير البديل فقط بعد رفض البديل وإعادة الطلب للمسودة.
-    EN: Allow substitute change only after substitute rejection returned the request to Draft.
+    AR: تنفيذ التحقق من إمكانية `reselect` `substitute` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute can reselect substitute within the `attendance_request_permissions` module.
     """
     return bool(
         previous
@@ -478,13 +550,17 @@ def _can_reselect_substitute(doc, previous):
 
 def _can_complete_legacy_report(doc, previous, user=None):
     """
-    AR:
-        استثناء ترحيل ضيق للطلبات القديمة التي أنشئت قبل جعل التقرير مطلوباً.
-        يسمح لمقدم الطلب بإكمال التقرير الفارغ مرة واحدة في مرحلة نشطة.
+    AR: تنفيذ التحقق من إمكانية `complete` القديم التقرير ضمن وحدة `attendance_request_permissions`.
+    EN: Execute can complete legacy report within the `attendance_request_permissions` module.
 
-    EN:
-        Narrow migration exception for requests created before the report became
-        mandatory. The applicant may complete a previously empty report once.
+    DETAILS / التفاصيل:
+    AR:
+            استثناء ترحيل ضيق للطلبات القديمة التي أنشئت قبل جعل التقرير مطلوباً.
+            يسمح لمقدم الطلب بإكمال التقرير الفارغ مرة واحدة في مرحلة نشطة.
+
+        EN:
+            Narrow migration exception for requests created before the report became
+            mandatory. The applicant may complete a previously empty report once.
     """
     user = user or frappe.session.user
     if not previous or not _is_applicant(previous, user):
@@ -497,7 +573,10 @@ def _can_complete_legacy_report(doc, previous, user=None):
 
 
 def validate_locked_request_fields(doc):
-    """AR: منع تعديل بيانات الطلب بعد أول حفظ. EN: Block request-data edits after first save."""
+    """
+    AR: تنفيذ التحقق من صحة `locked` الطلب الحقول ضمن وحدة `attendance_request_permissions`.
+    EN: Execute validate locked request fields within the `attendance_request_permissions` module.
+    """
     previous = _get_previous_doc(doc)
     if not previous:
         return
@@ -543,7 +622,10 @@ def validate_locked_request_fields(doc):
 
 
 def _validate_official_duty_fields(doc):
-    """AR: التحقق من الحقول المطلوبة والتقرير. EN: Validate mandatory duty fields and report."""
+    """
+    AR: تنفيذ التحقق من صحة الرسمية المهمة الحقول ضمن وحدة `attendance_request_permissions`.
+    EN: Execute validate official duty fields within the `attendance_request_permissions` module.
+    """
     if doc.reason != "On Duty":
         return
 
@@ -579,7 +661,10 @@ def _validate_official_duty_fields(doc):
 
 
 def set_substitute_user(doc):
-    """AR: التحقق من البديل وتعبئة حسابه واسمه. EN: Validate and resolve substitute data."""
+    """
+    AR: تنفيذ تعيين `substitute` المستخدم ضمن وحدة `attendance_request_permissions`.
+    EN: Execute set substitute user within the `attendance_request_permissions` module.
+    """
     substitute_employee = doc.get("custom_substitute_employee")
     if not substitute_employee:
         doc.set("custom_substitute_user", None)
@@ -618,7 +703,10 @@ def set_substitute_user(doc):
 
 
 def set_direct_manager_from_reports_to(doc):
-    """AR: تعبئة المسؤول المباشر من reports_to. EN: Resolve direct manager from reports_to."""
+    """
+    AR: تنفيذ تعيين `direct` المدير `from` `reports` `to` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute set direct manager from reports to within the `attendance_request_permissions` module.
+    """
     if not doc.get("employee"):
         return
 
@@ -641,26 +729,38 @@ def set_direct_manager_from_reports_to(doc):
 
 
 def _requested_workflow_action():
-    """AR: جلب اسم الإجراء المرسل إلى Frappe. EN: Return the exact workflow action."""
+    """
+    AR: تنفيذ `requested` سير العمل `action` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute requested workflow action within the `attendance_request_permissions` module.
+    """
     action = frappe.form_dict.get("action") if getattr(frappe, "form_dict", None) else None
     return action if action in WORKFLOW_ACTIONS else None
 
 
 def _is_transition(action, expected, previous_state, state, from_states, to_state):
-    """AR: مطابقة الإجراء أو الانتقال كحل احتياطي. EN: Match action or state transition fallback."""
+    """
+    AR: تنفيذ التحقق من كون `transition` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute is transition within the `attendance_request_permissions` module.
+    """
     if action:
         return action == expected
     return previous_state in from_states and state == to_state
 
 
 def _require_actor(condition, message):
-    """AR: التحقق من منفذ الإجراء. EN: Enforce the workflow actor."""
+    """
+    AR: تنفيذ `require` `actor` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute require actor within the `attendance_request_permissions` module.
+    """
     if not condition and not is_system_administrator():
         frappe.throw(_(message), frappe.PermissionError)
 
 
 def _clear_substitute_selection(doc):
-    """AR: تفريغ البديل المرفوض لإجبار إعادة الاختيار. EN: Clear rejected substitute for reselection."""
+    """
+    AR: تنفيذ `clear` `substitute` `selection` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute clear substitute selection within the `attendance_request_permissions` module.
+    """
     doc.set("custom_substitute_employee", None)
     doc.set("custom_substitute_employee_name", "")
     doc.set("custom_substitute_user", None)
@@ -670,13 +770,17 @@ def _clear_substitute_selection(doc):
 
 def sync_approval_status_fields(doc):
     """
-    AR:
-        تسجيل الموافقات الفعلية، ووضع Bypassed عند تجاوز مرحلة، وإعادة الطلب
-        للمسودة عند رفض البديل مع تفريغ البديل السابق.
+    AR: تنفيذ مزامنة `approval` الحالة الحقول ضمن وحدة `attendance_request_permissions`.
+    EN: Execute sync approval status fields within the `attendance_request_permissions` module.
 
-    EN:
-        Capture actual approvals, mark skipped stages as Bypassed, and return
-        substitute rejection to Draft while clearing the rejected substitute.
+    DETAILS / التفاصيل:
+    AR:
+            تسجيل الموافقات الفعلية، ووضع Bypassed عند تجاوز مرحلة، وإعادة الطلب
+            للمسودة عند رفض البديل مع تفريغ البديل السابق.
+
+        EN:
+            Capture actual approvals, mark skipped stages as Bypassed, and return
+            substitute rejection to Draft while clearing the rejected substitute.
     """
     state = doc.get("workflow_state") or ATTENDANCE_STATE_DRAFT
     previous_state = _get_previous_workflow_state(doc)
@@ -814,8 +918,8 @@ def sync_approval_status_fields(doc):
 
 def validate_attendance_request(doc, method=None):
     """
-    AR: نقطة التحقق الرئيسية قبل الحفظ أو تنفيذ إجراء سير العمل.
-    EN: Main server-side validation before save or workflow action.
+    AR: تنفيذ التحقق من صحة الحضور الطلب ضمن وحدة `attendance_request_permissions`.
+    EN: Execute validate attendance request within the `attendance_request_permissions` module.
     """
     # AR: منع تعديل طلبات الآخرين فقط؛ الطلب الشخصي يتبع المسار الطبيعي.
     # EN: Block edits to other users' requests only; personal requests follow normal workflow.
@@ -850,7 +954,10 @@ def validate_attendance_request(doc, method=None):
 
 
 def before_submit_attendance_request(doc, method=None):
-    """AR: ضمان تسجيل الاعتماد النهائي قبل submit. EN: Ensure final approver is captured before submit."""
+    """
+    AR: تنفيذ معالجة ما قبل اعتماد الحضور الطلب ضمن وحدة `attendance_request_permissions`.
+    EN: Execute before submit attendance request within the `attendance_request_permissions` module.
+    """
     sync_approval_status_fields(doc)
 
 
@@ -861,7 +968,10 @@ def before_submit_attendance_request(doc, method=None):
 
 
 def _grant_docshare(doc, user, write=0):
-    """AR: إنشاء أو تحديث مشاركة المستند. EN: Create or update a document share."""
+    """
+    AR: تنفيذ منح `docshare` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute grant docshare within the `attendance_request_permissions` module.
+    """
     if not user or user == "Administrator" or not frappe.db.exists("User", user):
         return
 
@@ -898,8 +1008,8 @@ def _grant_docshare(doc, user, write=0):
 
 def sync_attendance_request_shares(doc, method=None):
     """
-    AR: مشاركة الطلب فوراً مع مقدم الطلب والبديل والمسؤول المباشر.
-    EN: Share the request immediately with applicant, substitute, and direct manager.
+    AR: تنفيذ مزامنة الحضور الطلب `shares` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute sync attendance request shares within the `attendance_request_permissions` module.
     """
     if doc.reason != "On Duty" or not doc.name:
         return
@@ -941,7 +1051,10 @@ def sync_attendance_request_shares(doc, method=None):
 
 
 def resync_all_attendance_request_shares():
-    """AR: إعادة مزامنة المشاركات القديمة. EN: Re-synchronize shares on existing requests."""
+    """
+    AR: تنفيذ `resync` `all` الحضور الطلب `shares` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute resync all attendance request shares within the `attendance_request_permissions` module.
+    """
     names = frappe.get_all(ATTENDANCE_DOCTYPE, pluck="name")
     for name in names:
         sync_attendance_request_shares(frappe.get_doc(ATTENDANCE_DOCTYPE, name))
@@ -956,7 +1069,10 @@ def resync_all_attendance_request_shares():
 
 
 def get_users_with_role_safe(role):
-    """AR: المستخدمون المفعّلون لدور معين. EN: Enabled users assigned to a role."""
+    """
+    AR: تنفيذ استرجاع `users` `with` الدور `safe` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute get users with role safe within the `attendance_request_permissions` module.
+    """
     users = frappe.get_all(
         "Has Role",
         filters={"role": role, "parenttype": "User"},
@@ -970,7 +1086,10 @@ def get_users_with_role_safe(role):
 
 
 def _notification_already_exists(doc, target, subject):
-    """AR: منع تكرار نفس الإشعار للمستخدم. EN: Prevent duplicate user notifications."""
+    """
+    AR: تنفيذ الإشعار `already` `exists` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute notification already exists within the `attendance_request_permissions` module.
+    """
     return bool(
         frappe.db.exists(
             "Notification Log",
@@ -986,13 +1105,17 @@ def _notification_already_exists(doc, target, subject):
 
 def _translate_notification_for_user(target, source, *args):
     """
-    AR:
-        ترجمة نص الإشعار وفق لغة المستخدم المستهدف، لا وفق لغة المستخدم
-        الذي نفذ إجراء سير العمل.
+    AR: تنفيذ `translate` الإشعار `for` المستخدم ضمن وحدة `attendance_request_permissions`.
+    EN: Execute translate notification for user within the `attendance_request_permissions` module.
 
-    EN:
-        Translate the notification using the target user's language instead
-        of the workflow actor's current session language.
+    DETAILS / التفاصيل:
+    AR:
+            ترجمة نص الإشعار وفق لغة المستخدم المستهدف، لا وفق لغة المستخدم
+            الذي نفذ إجراء سير العمل.
+
+        EN:
+            Translate the notification using the target user's language instead
+            of the workflow actor's current session language.
     """
     language = (
         frappe.get_cached_value("User", target, "language")
@@ -1004,7 +1127,8 @@ def _translate_notification_for_user(target, source, *args):
 
 def _create_notification(doc, target, source, *args):
     """
-    AR: إنشاء إشعار مترجم وغير مكرر. EN: Create a translated, de-duplicated notification.
+    AR: تنفيذ إنشاء الإشعار ضمن وحدة `attendance_request_permissions`.
+    EN: Execute create notification within the `attendance_request_permissions` module.
     """
     if (
         not target
@@ -1031,6 +1155,10 @@ def _create_notification(doc, target, source, *args):
 
 
 def _applicant_name(doc):
+    """
+    AR: تنفيذ `applicant` `name` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute applicant name within the `attendance_request_permissions` module.
+    """
     return (
         doc.get("employee_name")
         or frappe.db.get_value("Employee", doc.get("employee"), "employee_name")
@@ -1041,8 +1169,8 @@ def _applicant_name(doc):
 
 def send_attendance_workflow_notifications(doc):
     """
-    AR: إرسال الإشعارات حسب المرحلة، مع إشعار المدير فور انتظار البديل.
-    EN: Send stage notifications, including immediate manager notice during substitute stage.
+    AR: تنفيذ `send` الحضور سير العمل `notifications` ضمن وحدة `attendance_request_permissions`.
+    EN: Execute send attendance workflow notifications within the `attendance_request_permissions` module.
     """
     state = doc.get("workflow_state")
     previous_state = _get_previous_workflow_state(doc)
@@ -1131,8 +1259,8 @@ def send_attendance_workflow_notifications(doc):
 
 def on_update_attendance_request(doc, method=None):
     """
-    AR: مزامنة المشاركات والإشعارات بعد تحديث الطلب.
-    EN: Synchronize shares and notifications after a request update.
+    AR: تنفيذ معالجة حدث تحديث الحضور الطلب ضمن وحدة `attendance_request_permissions`.
+    EN: Execute on update attendance request within the `attendance_request_permissions` module.
     """
     sync_attendance_request_shares(doc)
     send_attendance_workflow_notifications(doc)
@@ -1140,8 +1268,8 @@ def on_update_attendance_request(doc, method=None):
 
 def on_submit_attendance_request(doc, method=None):
     """
-    AR: مزامنة المشاركات والإشعارات بعد الاعتماد النهائي.
-    EN: Synchronize shares and notifications after final submission.
+    AR: تنفيذ معالجة حدث اعتماد الحضور الطلب ضمن وحدة `attendance_request_permissions`.
+    EN: Execute on submit attendance request within the `attendance_request_permissions` module.
     """
     sync_attendance_request_shares(doc)
     send_attendance_workflow_notifications(doc)

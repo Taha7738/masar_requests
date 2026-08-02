@@ -1,3 +1,8 @@
+"""
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `simplify_attendance_leave_workflow_and_hr_user_v13` على المواقع القائمة.
+EN: Idempotent migration patch for applying `simplify_attendance_leave_workflow_and_hr_user_v13` changes to existing sites.
+"""
+
 # ============================================================================
 # AR: ترقية V13 — توحيد المهمة مع الإجازة وإلغاء دورة التقرير المستقلة
 # EN: V13 migration — align Official Duty with Leave and remove report workflow
@@ -34,13 +39,17 @@ OBSOLETE_REPORT_ACTIONS = {
 
 def _migrate_existing_attendance_requests():
     """
-    AR:
-        تحويل الطلبات الموجودة في مراحل التقرير القديمة إلى الحالة النهائية
-        معتمدة، لأن V13 يعتمد دورة موافقة واحدة فقط.
+    AR: تنفيذ ترحيل الموجود الحضور `requests` ضمن وحدة `simplify_attendance_leave_workflow_and_hr_user_v13`.
+    EN: Execute migrate existing attendance requests within the `simplify_attendance_leave_workflow_and_hr_user_v13` module.
 
-    EN:
-        Convert requests left in obsolete report stages to final Approved,
-        because V13 uses one approval cycle only.
+    DETAILS / التفاصيل:
+    AR:
+            تحويل الطلبات الموجودة في مراحل التقرير القديمة إلى الحالة النهائية
+            معتمدة، لأن V13 يعتمد دورة موافقة واحدة فقط.
+
+        EN:
+            Convert requests left in obsolete report stages to final Approved,
+            because V13 uses one approval cycle only.
     """
     if not frappe.db.exists("DocType", ATTENDANCE_DOCTYPE):
         return 0
@@ -69,8 +78,8 @@ def _migrate_existing_attendance_requests():
 
 def _remove_other_attendance_workflows():
     """
-    AR: حذف مسارات Attendance القديمة بعد إنشاء المسار النهائي الوحيد.
-    EN: Delete obsolete Attendance workflows after creating the single final workflow.
+    AR: تنفيذ إزالة `other` الحضور `workflows` ضمن وحدة `simplify_attendance_leave_workflow_and_hr_user_v13`.
+    EN: Execute remove other attendance workflows within the `simplify_attendance_leave_workflow_and_hr_user_v13` module.
     """
     from masar_requests.setup_attendance_request import ATTENDANCE_WORKFLOW_NAME
 
@@ -94,7 +103,10 @@ def _remove_other_attendance_workflows():
 
 
 def _master_is_referenced(doctype, name):
-    """AR: فحص آمن قبل حذف حالة أو إجراء. EN: Safely check master references."""
+    """
+    AR: تنفيذ `master` التحقق من كون `referenced` ضمن وحدة `simplify_attendance_leave_workflow_and_hr_user_v13`.
+    EN: Execute master is referenced within the `simplify_attendance_leave_workflow_and_hr_user_v13` module.
+    """
     try:
         if doctype == "Workflow State":
             return bool(
@@ -113,8 +125,8 @@ def _master_is_referenced(doctype, name):
 
 def _remove_obsolete_workflow_masters():
     """
-    AR: حذف حالات وإجراءات التقرير القديمة فقط عندما لا يستخدمها Workflow آخر.
-    EN: Delete obsolete report states/actions only when no workflow references them.
+    AR: تنفيذ إزالة `obsolete` سير العمل `masters` ضمن وحدة `simplify_attendance_leave_workflow_and_hr_user_v13`.
+    EN: Execute remove obsolete workflow masters within the `simplify_attendance_leave_workflow_and_hr_user_v13` module.
     """
     removed = []
     for doctype, names in (
@@ -135,17 +147,21 @@ def _remove_obsolete_workflow_masters():
 
 def execute():
     """
-    AR:
-        1) إعادة بناء طلب المهمة بسير عمل الإجازة الجاهز.
-        2) تعديل رفض البديل في الإجازة ليعود للموظف.
-        3) منح HR User العرض والطباعة فقط للطلبات الثلاثة.
-        4) ترحيل السجلات القديمة وتنظيف حالات التقرير غير المستخدمة.
+    AR: تنفيذ تنفيذ ضمن وحدة `simplify_attendance_leave_workflow_and_hr_user_v13`.
+    EN: Execute execute within the `simplify_attendance_leave_workflow_and_hr_user_v13` module.
 
-    EN:
-        1) Rebuild Official Duty with the ready Leave workflow.
-        2) Rebuild Leave so substitute rejection returns to the applicant.
-        3) Grant HR User read/print-only access to all three request types.
-        4) Migrate legacy records and remove unused report workflow masters.
+    DETAILS / التفاصيل:
+    AR:
+            1) إعادة بناء طلب المهمة بسير عمل الإجازة الجاهز.
+            2) تعديل رفض البديل في الإجازة ليعود للموظف.
+            3) منح HR User العرض والطباعة فقط للطلبات الثلاثة.
+            4) ترحيل السجلات القديمة وتنظيف حالات التقرير غير المستخدمة.
+
+        EN:
+            1) Rebuild Official Duty with the ready Leave workflow.
+            2) Rebuild Leave so substitute rejection returns to the applicant.
+            3) Grant HR User read/print-only access to all three request types.
+            4) Migrate legacy records and remove unused report workflow masters.
     """
     setup_attendance_request_all()
     create_leave_application_workflow()

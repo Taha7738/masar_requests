@@ -1,3 +1,8 @@
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `leave_balance_report_patch`.
+EN: Masar application functionality implemented by the `leave_balance_report_patch` module.
+"""
+
 # AR: استيراد مكتبة فرابي / EN: Import frappe library
 import importlib
 
@@ -10,9 +15,13 @@ def get_leaves_for_period_from_ledger(employee, leave_type, from_date, to_date, 
     # AR: تحويل النصوص إلى كائنات تاريخ / EN: Convert strings to date objects
     # AR: حساب رصيد الإجازة من قيود دفتر الأستاذ خلال فترة محددة.
     # EN: Calculate leave balance from ledger entries for a date range.
+    """
+    AR: تنفيذ استرجاع `leaves` `for` `period` `from` `ledger` ضمن وحدة `leave_balance_report_patch`.
+    EN: Execute get leaves for period from ledger within the `leave_balance_report_patch` module.
+    """
     from_date = getdate(from_date)
     to_date = getdate(to_date)
-    
+
     # AR: صياغة شروط الاستعلام في قاعدة البيانات / EN: Construct query conditions for database
     conditions = "employee = %(employee)s AND leave_type = %(leave_type)s AND docstatus = 1 AND leaves < 0 AND from_date <= %(to_date)s AND to_date >= %(from_date)s"
     # AR: القيم الممررة لاستعلام الـ SQL / EN: Values passed to SQL query
@@ -25,24 +34,28 @@ def get_leaves_for_period_from_ledger(employee, leave_type, from_date, to_date, 
 
     # AR: تنفيذ الاستعلام لجمع أيام الإجازات المستهلكة / EN: Execute query to sum consumed leave days
     total = frappe.db.sql(f"SELECT COALESCE(SUM(leaves), 0) FROM `tabLeave Ledger Entry` WHERE {conditions}", values)[0][0]
-    
+
     # AR: إرجاع المجموع بدقة 4 خانات عشرية / EN: Return total with 4 decimal precision
     return flt(total, 4)
 
 # AR: دالة تطبيق الترقيع على التقرير القياسي للنظام / EN: Function to apply the patch to the standard system report
 def apply_patch():
     """
-    AR:
-        يطبق ترقيع تقرير رصيد الإجازات فقط عندما تكون واجهة HRMS المتوقعة
-        موجودة. بعض إصدارات HRMS غيّرت مسار التقرير أو اسم الدالة؛ في هذه
-        الحالة نرجع False بصمت لأن حاسبة طلب الإجازة الخاصة بالتطبيق تعمل
-        مستقلة عن هذا التقرير.
+    AR: تنفيذ تطبيق تصحيح ضمن وحدة `leave_balance_report_patch`.
+    EN: Execute apply patch within the `leave_balance_report_patch` module.
 
-    EN:
-        Apply the Employee Leave Balance report patch only when the expected
-        HRMS API exists. Some HRMS releases changed the report path or helper
-        name; return False quietly in that case because the app's Leave
-        Application balance calculator works independently of this report.
+    DETAILS / التفاصيل:
+    AR:
+            يطبق ترقيع تقرير رصيد الإجازات فقط عندما تكون واجهة HRMS المتوقعة
+            موجودة. بعض إصدارات HRMS غيّرت مسار التقرير أو اسم الدالة؛ في هذه
+            الحالة نرجع False بصمت لأن حاسبة طلب الإجازة الخاصة بالتطبيق تعمل
+            مستقلة عن هذا التقرير.
+
+        EN:
+            Apply the Employee Leave Balance report patch only when the expected
+            HRMS API exists. Some HRMS releases changed the report path or helper
+            name; return False quietly in that case because the app's Leave
+            Application balance calculator works independently of this report.
     """
     try:
         employee_leave_balance = importlib.import_module(

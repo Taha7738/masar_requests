@@ -1,11 +1,15 @@
 """
-AR: فحص جاهزية Masar Requests قبل التسليم أو التشغيل في موقع العميل.
-EN: Masar Requests production-readiness checks for a customer site.
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `preflight`.
+EN: Masar application functionality implemented by the `preflight` module.
 """
 
 import frappe
 
 from masar_requests import hooks as app_hooks
+from masar_requests.overrides.shift_type import (
+    audit_shift_times_patch,
+    get_working_weekdays,
+)
 
 
 WORKFLOW_ROLES = (
@@ -22,7 +26,10 @@ MATERIAL_REQUEST_ENGINE_HOOK = (
 
 
 def _enabled_users_with_role(role):
-    """AR: المستخدمون المفعلون في دور محدد. EN: Enabled users for one role."""
+    """
+    AR: تنفيذ `enabled` `users` `with` الدور ضمن وحدة `preflight`.
+    EN: Execute enabled users with role within the `preflight` module.
+    """
     users = frappe.get_all(
         "Has Role",
         filters={"parenttype": "User", "role": role},
@@ -38,14 +45,18 @@ def _enabled_users_with_role(role):
 
 def run_preflight():
     """
-    AR:
-        فحص للقراءة فقط؛ لا يعدّل أي بيانات. شغّله بعد ضبط الموظفين والأدوار
-        وقبل تسليم الموقع. تكون النتيجة جاهزة فقط عندما تكون errors فارغة.
+    AR: تنفيذ تشغيل `preflight` ضمن وحدة `preflight`.
+    EN: Execute run preflight within the `preflight` module.
 
-    EN:
-        Read-only validation; it never changes data. Run it after employee and
-        role configuration and before handover. The site is ready only when
-        the errors list is empty.
+    DETAILS / التفاصيل:
+    AR:
+            فحص للقراءة فقط؛ لا يعدّل أي بيانات. شغّله بعد ضبط الموظفين والأدوار
+            وقبل تسليم الموقع. تكون النتيجة جاهزة فقط عندما تكون errors فارغة.
+
+        EN:
+            Read-only validation; it never changes data. Run it after employee and
+            role configuration and before handover. The site is ready only when
+            the errors list is empty.
     """
     result = {
         "ready": False,
@@ -53,6 +64,50 @@ def run_preflight():
         "warnings": [],
         "info": [],
     }
+
+
+    # AR: التحقق من توافق طبقة أوقات الوردية مع إصدار HRMS المثبت.
+    # EN: Validate variable-shift compatibility with the installed HRMS release.
+    shift_patch = audit_shift_times_patch()
+    if not shift_patch.get("patch_compatible"):
+        result["errors"].append(
+            "Variable weekday shift timing compatibility patch is not active. "
+            "Review HRMS version compatibility before using auto attendance."
+        )
+    else:
+        result["info"].append({"variable_shift_patch": shift_patch})
+
+    shift_meta = frappe.get_meta("Shift Type")
+    if shift_meta.has_field("custom_enable_variable_shift_times"):
+        for shift_name in frappe.get_all(
+            "Shift Type",
+            filters={"custom_enable_variable_shift_times": 1},
+            pluck="name",
+        ):
+            shift_doc = frappe.get_doc("Shift Type", shift_name)
+            configured_days = {
+                row.day_of_week
+                for row in shift_doc.get("custom_shift_times") or []
+                if row.day_of_week and row.start_time is not None and row.end_time is not None
+            }
+            # AR:
+            # يجب أن يطلب فحص الجاهزية صفوف أيام العمل فقط، لا جميع أيام
+            # الأسبوع. أيام العطلة الأسبوعية المستبعدة من Holiday List لا
+            # ينبغي أن تظهر في جدول الوردية، ولذلك لا تعتبر صفوفًا ناقصة.
+            #
+            # EN:
+            # Preflight must require working weekdays only, not all seven days.
+            # Recurring weekly offs excluded by the Shift Type Holiday List are
+            # intentionally absent from the table and are not missing rows.
+            required_days = get_working_weekdays(shift_doc.get("holiday_list"))
+            missing_days = [
+                day for day in required_days if day not in configured_days
+            ]
+            if missing_days:
+                result["errors"].append(
+                    f"Shift Type {shift_name} is missing working-day timing rows: "
+                    + ", ".join(missing_days)
+                )
 
     # AR: التحقق من محرك Python الأصلي بدل Server Script القديم المحذوف.
     # EN: Validate the native Python engine instead of the removed Server Script.
@@ -160,4 +215,39 @@ def run_preflight():
                 )
 
     result["ready"] = not result["errors"]
+    return result
+
+
+# MASAR_IGNORE_LEGACY_MR_SECRETARY_ROLE_V22_3
+# The broad Material Request Secretary role was retired in V22.2.
+# Secretary access is now document-specific through Masar Secretary Access.
+
+_legacy_run_preflight_before_v22_3 = run_preflight
+
+
+def run_preflight(*args, **kwargs):
+    """
+    AR: تنفيذ تشغيل `preflight` ضمن وحدة `preflight`.
+    EN: Execute run preflight within the `preflight` module.
+    """
+    result = _legacy_run_preflight_before_v22_3(
+        *args,
+        **kwargs,
+    )
+
+    if not isinstance(result, dict):
+        return result
+
+    legacy_error_fragment = (
+        "is missing the Material Request Secretary role"
+    )
+
+    errors = [
+        error
+        for error in (result.get("errors") or [])
+        if legacy_error_fragment not in str(error)
+    ]
+
+    result["errors"] = errors
+    result["ready"] = not bool(errors)
     return result

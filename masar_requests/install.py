@@ -1,3 +1,8 @@
+"""
+AR: إعداد وتهيئة مكونات التطبيق ضمن الوحدة `install`.
+EN: Application setup and configuration routines for the `install` module.
+"""
+
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
@@ -12,53 +17,74 @@ from masar_requests.setup_material_request import (
     teardown_material_request,
 )
 
-from masar_requests.setup_attendance_request import setup_attendance_request_all
-from masar_requests.uninstall_cleanup import cleanup_attendance_request
+from masar_requests.setup_official_duty_request import (
+    setup_official_duty_request_all,
+    teardown_official_duty_request,
+)
+from masar_requests.setup_partial_leave_attendance import (
+    setup_partial_leave_attendance_fields,
+    teardown_partial_leave_attendance_fields,
+)
 from masar_requests.hr_user_read_only import setup_hr_user_read_only_permissions
 
 
 def after_install(app_name=None):
     """
-    AR: إنشاء إعدادات التطبيق مرة واحدة عند تثبيته على موقع جديد.
-    EN: Create the application setup once when it is installed on a new site.
+    AR: تنفيذ معالجة ما بعد تثبيت ضمن وحدة `install`.
+    EN: Execute after install within the `install` module.
     """
     sync_custom_setup()
 
 
 def after_migrate():
     """
-    AR:
-        لا نعيد إنشاء Workflow أو الصلاحيات أو Server Scripts هنا. تشغيل
-        الإعداد الكامل في كل migrate قد يمحو تخصيصات العميل. أي تغيير لاحق
-        في البيانات يُنفذ عبر Patch مرقم داخل patches.txt.
+    AR: تنفيذ معالجة ما بعد ترحيل ضمن وحدة `install`.
+    EN: Execute after migrate within the `install` module.
 
-    EN:
-        Do not recreate Workflows, permissions, or Server Scripts here.
-        Running the full setup on every migrate can overwrite customer
-        customizations. Future data changes must use a numbered patch.
+    DETAILS / التفاصيل:
+    AR:
+            لا نعيد إنشاء Workflow أو الصلاحيات أو Server Scripts هنا. تشغيل
+            الإعداد الكامل في كل migrate قد يمحو تخصيصات العميل. أي تغيير لاحق
+            في البيانات يُنفذ عبر Patch مرقم داخل patches.txt.
+
+        EN:
+            Do not recreate Workflows, permissions, or Server Scripts here.
+            Running the full setup on every migrate can overwrite customer
+            customizations. Future data changes must use a numbered patch.
     """
     frappe.clear_cache(doctype="Leave Application")
     frappe.clear_cache(doctype="Material Request")
     frappe.clear_cache(doctype="Material Request Item")
     frappe.clear_cache(doctype="Attendance Request")
+    frappe.clear_cache(doctype="Official Duty Request")
+    frappe.clear_cache(doctype="Attendance")
+    frappe.clear_cache(doctype="Salary Slip")
+    frappe.clear_cache(doctype="Shift Type")
+    frappe.clear_cache(doctype="Shift Assignment")
+    frappe.clear_cache(doctype="Employee Checkin")
 
 
 def sync_custom_setup():
     """
-    AR:
-        إعداد التثبيت الأولي أو Patch مرقم فقط. لا تُربط هذه الدالة مع
-        after_migrate مباشرة.
+    AR: تنفيذ مزامنة `custom` إعداد ضمن وحدة `install`.
+    EN: Execute sync custom setup within the `install` module.
 
-    EN:
-        Initial-install or numbered-patch setup only. Do not call this
-        function directly from after_migrate.
+    DETAILS / التفاصيل:
+    AR:
+            إعداد التثبيت الأولي أو Patch مرقم فقط. لا تُربط هذه الدالة مع
+            after_migrate مباشرة.
+
+        EN:
+            Initial-install or numbered-patch setup only. Do not call this
+            function directly from after_migrate.
     """
     core_fields = get_core_custom_fields()
     create_custom_fields(core_fields, update=True)
 
     setup_leave_and_shift_all()
     setup_material_request_all()
-    setup_attendance_request_all()
+    setup_official_duty_request_all()
+    setup_partial_leave_attendance_fields()
 
     # AR: منح HR User صلاحية عامة للعرض والطباعة فقط للطلبات الثلاثة.
     # EN: Grant HR User global read/print-only access to the three request types.
@@ -67,20 +93,30 @@ def sync_custom_setup():
     for doctype in core_fields.keys():
         frappe.clear_cache(doctype=doctype)
     frappe.clear_cache(doctype="Material Request")
+    frappe.clear_cache(doctype="Official Duty Request")
     frappe.clear_cache(doctype="Attendance Request")
+    frappe.clear_cache(doctype="Attendance")
+    frappe.clear_cache(doctype="Salary Slip")
+    frappe.clear_cache(doctype="Shift Type")
+    frappe.clear_cache(doctype="Shift Assignment")
+    frappe.clear_cache(doctype="Employee Checkin")
 
 
 def schedule_workflow_share_resync_after_employee_change(doc, method=None):
     """
-    AR:
-        عند تغيير علاقة الموظف بحسابه أو مديره أو سكرتيره، نعيد مزامنة
-        المشاركات بعد نجاح الحفظ. المهمة تعمل في الخلفية وتُجمع خلال دقيقة
-        كي لا يبطؤ حفظ سجل Employee.
+    AR: تنفيذ `schedule` سير العمل مشاركة `resync` معالجة ما بعد الموظف `change` ضمن وحدة `install`.
+    EN: Execute schedule workflow share resync after employee change within the `install` module.
 
-    EN:
-        When a user's account, manager, or secretary relation changes,
-        re-sync request sharing after the save commits. The background job is
-        coalesced for one minute so saving an Employee record stays fast.
+    DETAILS / التفاصيل:
+    AR:
+            عند تغيير علاقة الموظف بحسابه أو مديره أو سكرتيره، نعيد مزامنة
+            المشاركات بعد نجاح الحفظ. المهمة تعمل في الخلفية وتُجمع خلال دقيقة
+            كي لا يبطؤ حفظ سجل Employee.
+
+        EN:
+            When a user's account, manager, or secretary relation changes,
+            re-sync request sharing after the save commits. The background job is
+            coalesced for one minute so saving an Employee record stays fast.
     """
     watched_fields = {
         "user_id",
@@ -112,14 +148,14 @@ def schedule_workflow_share_resync_after_employee_change(doc, method=None):
 
 def resync_all_workflow_shares():
     """
-    AR: تحديث مشاركات الإجازات والمواد بعد تعديل الهيكل الإداري.
-    EN: Re-sync Leave and Material Request shares after hierarchy changes.
+    AR: تنفيذ `resync` `all` سير العمل `shares` ضمن وحدة `install`.
+    EN: Execute resync all workflow shares within the `install` module.
     """
     from masar_requests.leave_application_permissions import (
         resync_all_leave_application_shares,
     )
-    from masar_requests.attendance_request_permissions import (
-        resync_all_attendance_request_shares,
+    from masar_requests.official_duty_request_permissions import (
+        resync_all_official_duty_request_shares,
     )
     from masar_requests.setup_material_request import (
         resync_all_material_request_shares,
@@ -128,7 +164,7 @@ def resync_all_workflow_shares():
 
     secretary_roles_assigned = sync_material_request_secretary_roles()
     leave_requests = resync_all_leave_application_shares()
-    attendance_requests = resync_all_attendance_request_shares()
+    official_duty_requests = resync_all_official_duty_request_shares()
     material_requests = resync_all_material_request_shares()
 
     frappe.cache().delete_value(
@@ -136,7 +172,7 @@ def resync_all_workflow_shares():
     )
     return {
         "leave_requests": leave_requests,
-        "attendance_requests": attendance_requests,
+        "official_duty_requests": official_duty_requests,
         "material_requests": material_requests,
         "secretary_roles_assigned": secretary_roles_assigned,
     }
@@ -145,6 +181,10 @@ def resync_all_workflow_shares():
 def get_core_custom_fields():
     # AR: إرجاع تعريفات الحقول الأساسية التي يديرها التطبيق.
     # EN: Return definitions for the core fields managed by the app.
+    """
+    AR: تنفيذ استرجاع `core` `custom` الحقول ضمن وحدة `install`.
+    EN: Execute get core custom fields within the `install` module.
+    """
     return {
         # "User": [
         #     {"fieldname": "custom_employment_data_tab", "fieldtype": "Tab Break", "label": "Employment Data", "insert_after": "user_image"},
@@ -164,6 +204,10 @@ def get_core_custom_fields():
 def before_uninstall():
     # AR: تنظيف إعدادات التطبيق المملوكة له قبل إلغاء التثبيت.
     # EN: Remove app-owned configuration before uninstalling the app.
+    """
+    AR: تنفيذ معالجة ما قبل إلغاء تثبيت ضمن وحدة `install`.
+    EN: Execute before uninstall within the `install` module.
+    """
     core_fields = get_core_custom_fields()
     for doctype, fields in core_fields.items():
         frappe.db.delete(
@@ -171,7 +215,8 @@ def before_uninstall():
             {"fieldname": ("in", [field["fieldname"] for field in fields]), "dt": doctype},
         )
         frappe.clear_cache(doctype=doctype)
-    
+
     teardown_material_request()
     teardown_leave_and_shift()
-    cleanup_attendance_request()
+    teardown_partial_leave_attendance_fields()
+    teardown_official_duty_request()

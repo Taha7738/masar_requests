@@ -1,0 +1,579 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-07-31 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_hcnw",
+  "column_break_fxae",
+  "naming_series",
+  "workflow_state",
+  "status",
+  "employee_section",
+  "employee",
+  "employee_name",
+  "department",
+  "designation",
+  "employee_column",
+  "custom_substitute_employee",
+  "company",
+  "custom_applicant_user",
+  "custom_substitute_employee_name",
+  "custom_substitute_user",
+  "duty_period_section",
+  "from_date",
+  "to_date",
+  "duty_type",
+  "include_holidays",
+  "duty_period_column",
+  "shift",
+  "custom_leaving_time",
+  "custom_return_time",
+  "reason",
+  "mission_section",
+  "custom_mission_location",
+  "custom_assignment_explanation",
+  "report_section",
+  "custom_achievement_report",
+  "custom_achievement_report_attachment",
+  "processing_section",
+  "processing_status",
+  "processing_message",
+  "total_official_duty_hours",
+  "total_physical_working_hours",
+  "processing_column",
+  "total_credited_working_hours",
+  "total_uncovered_hours",
+  "last_reconciliation_on",
+  "attendance_details",
+  "approval_section",
+  "custom_substitute_approval",
+  "custom_substitute_approved_by",
+  "custom_substitute_approved_on",
+  "custom_direct_manager_employee",
+  "custom_direct_manager_user",
+  "custom_direct_manager_approval",
+  "custom_direct_manager_approved_by",
+  "custom_direct_manager_approved_on",
+  "custom_hr_approved_by",
+  "custom_hr_approved_on",
+  "legacy_attendance_request",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "ODR-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "ODR-.YYYY.-.#####",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Workflow State",
+   "no_copy": 1,
+   "options": "Workflow State",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nApproved\nRejected\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Information"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_applicant_user",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Applicant User",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "custom_substitute_employee",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Substitute Employee",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "custom_substitute_employee.employee_name",
+   "fieldname": "custom_substitute_employee_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Substitute Employee Name",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_substitute_user",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Substitute User",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duty_period_section",
+   "fieldtype": "Section Break",
+   "label": "Official Duty Period"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "default": "Hourly",
+   "fieldname": "duty_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Duty Type",
+   "options": "Hourly\nFull Day\nNo Attendance Adjustment",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "include_holidays",
+   "fieldtype": "Check",
+   "label": "Include Holidays"
+  },
+  {
+   "fieldname": "duty_period_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shift",
+   "fieldtype": "Link",
+   "label": "Shift",
+   "options": "Shift Type"
+  },
+  {
+   "depends_on": "eval:doc.duty_type == 'Hourly'",
+   "fieldname": "custom_leaving_time",
+   "fieldtype": "Time",
+   "label": "Leaving Time",
+   "mandatory_depends_on": "eval:doc.duty_type == 'Hourly'"
+  },
+  {
+   "depends_on": "eval:doc.duty_type == 'Hourly'",
+   "fieldname": "custom_return_time",
+   "fieldtype": "Time",
+   "label": "Return Time",
+   "mandatory_depends_on": "eval:doc.duty_type == 'Hourly'"
+  },
+  {
+   "default": "On Duty",
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mission_section",
+   "fieldtype": "Section Break",
+   "label": "Mission Details"
+  },
+  {
+   "fieldname": "custom_mission_location",
+   "fieldtype": "Data",
+   "label": "Mission Location",
+   "reqd": 1
+  },
+  {
+   "fieldname": "custom_assignment_explanation",
+   "fieldtype": "Small Text",
+   "label": "Assignment Details",
+   "reqd": 1
+  },
+  {
+   "fieldname": "report_section",
+   "fieldtype": "Section Break",
+   "label": "Achievement Report"
+  },
+  {
+   "fieldname": "custom_achievement_report",
+   "fieldtype": "Text Editor",
+   "label": "Achievement Report",
+   "reqd": 1
+  },
+  {
+   "fieldname": "custom_achievement_report_attachment",
+   "fieldtype": "Attach",
+   "label": "Achievement Report Attachment"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "processing_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance Reconciliation"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Pending",
+   "fieldname": "processing_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Processing Status",
+   "options": "Pending\nWaiting for Shift End\nPartially Reconciled\nReconciled\nManual Review\nNo Attendance Adjustment\nFailed\nLegacy Linked",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "processing_message",
+   "fieldtype": "Small Text",
+   "label": "Processing Message",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "total_official_duty_hours",
+   "fieldtype": "Float",
+   "label": "Official Duty Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "total_physical_working_hours",
+   "fieldtype": "Float",
+   "label": "Physical Working Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "processing_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "total_credited_working_hours",
+   "fieldtype": "Float",
+   "label": "Credited Working Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "total_uncovered_hours",
+   "fieldtype": "Float",
+   "label": "Uncovered Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "last_reconciliation_on",
+   "fieldtype": "Datetime",
+   "label": "Last Reconciliation On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "attendance_details",
+   "fieldtype": "Table",
+   "label": "Daily Attendance Details",
+   "options": "Official Duty Attendance Detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Approval Audit"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_substitute_approval",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Substitute Approval",
+   "options": "Pending\nApproved\nRejected\nBypassed",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_substitute_approved_by",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Substitute Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_substitute_approved_on",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Substitute Approved On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_direct_manager_employee",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Direct Manager Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_direct_manager_user",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Direct Manager User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_direct_manager_approval",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Direct Manager Approval",
+   "options": "Pending\nApproved\nRejected\nBypassed",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_direct_manager_approved_by",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "Direct Manager Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_direct_manager_approved_on",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Direct Manager Approved On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_hr_approved_by",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "ignore_user_permissions": 1,
+   "label": "HR Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_hr_approved_on",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "HR Approved On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "legacy_attendance_request",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Legacy Attendance Request",
+   "no_copy": 1,
+   "options": "Attendance Request",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Official Duty Request",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fxae",
+   "fieldtype": "Column Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_hcnw",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Attendance Request",
+   "link_fieldname": "custom_official_duty_request"
+  },
+  {
+   "link_doctype": "Attendance",
+   "link_fieldname": "custom_official_duty_request"
+  }
+ ],
+ "modified": "2026-08-02 21:46:55.141640",
+ "modified_by": "Administrator",
+ "module": "Masar Requests",
+ "name": "Official Duty Request",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "HR User"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Employee Self Service",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Official Duty Secretary"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "employee,employee_name,custom_mission_location,workflow_state,processing_status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

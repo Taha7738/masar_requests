@@ -1,3 +1,8 @@
+"""
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `sync_leave_layout_hr_user_and_arabic_print_v17` على المواقع القائمة.
+EN: Idempotent migration patch for applying `sync_leave_layout_hr_user_and_arabic_print_v17` changes to existing sites.
+"""
+
 # ============================================================================
 # AR: مزامنة واجهة الإجازة وصلاحية HR User وطباعة الموافقات العربية — V17
 # EN: Sync Leave UI, HR User access, and Arabic approval printing — V17
@@ -32,8 +37,8 @@ PRINT_FORMATS = (
 
 def _definition_path(folder, filename):
     """
-    AR: إرجاع مسار ملف JSON القياسي داخل التطبيق.
-    EN: Return the standard JSON definition path inside the app.
+    AR: تنفيذ `definition` `path` ضمن وحدة `sync_leave_layout_hr_user_and_arabic_print_v17`.
+    EN: Execute definition path within the `sync_leave_layout_hr_user_and_arabic_print_v17` module.
     """
     return Path(
         frappe.get_app_path(
@@ -48,8 +53,8 @@ def _definition_path(folder, filename):
 
 def _load_definition(folder, filename):
     """
-    AR: قراءة تعريف تنسيق الطباعة والتحقق من وجوده.
-    EN: Load and validate a print-format definition.
+    AR: تنفيذ تحميل `definition` ضمن وحدة `sync_leave_layout_hr_user_and_arabic_print_v17`.
+    EN: Execute load definition within the `sync_leave_layout_hr_user_and_arabic_print_v17` module.
     """
     path = _definition_path(folder, filename)
     if not path.exists():
@@ -61,8 +66,8 @@ def _load_definition(folder, filename):
 
 def _database_values(definition, doctype):
     """
-    AR: تجهيز قيم سجل Print Format المراد حفظها.
-    EN: Build database values for the Print Format record.
+    AR: تنفيذ `database` `values` ضمن وحدة `sync_leave_layout_hr_user_and_arabic_print_v17`.
+    EN: Execute database values within the `sync_leave_layout_hr_user_and_arabic_print_v17` module.
     """
     return {
         "doc_type": doctype,
@@ -84,8 +89,8 @@ def _database_values(definition, doctype):
 
 def _sync_print_format(config):
     """
-    AR: مزامنة ملف JSON مع سجل Print Format الفعلي في قاعدة البيانات.
-    EN: Synchronize JSON with the active database Print Format record.
+    AR: تنفيذ مزامنة طباعة تنسيق ضمن وحدة `sync_leave_layout_hr_user_and_arabic_print_v17`.
+    EN: Execute sync print format within the `sync_leave_layout_hr_user_and_arabic_print_v17` module.
     """
     definition = _load_definition(config["folder"], config["filename"])
     values = _database_values(definition, config["doctype"])
@@ -110,15 +115,19 @@ def _sync_print_format(config):
 
 def execute():
     """
-    AR:
-        1) عكس عمودي واجهة طلب الإجازة وإخفاء حالة اعتماد المدير.
-        2) إعادة تطبيق صلاحية HR User للقراءة والطباعة مع استثناء طلبه الشخصي.
-        3) مزامنة طباعة الإجازة والمواد بالنصوص المترجمة العربية فقط.
+    AR: تنفيذ تنفيذ ضمن وحدة `sync_leave_layout_hr_user_and_arabic_print_v17`.
+    EN: Execute execute within the `sync_leave_layout_hr_user_and_arabic_print_v17` module.
 
-    EN:
-        1) Swap Leave form columns and hide manager approval status.
-        2) Reapply HR User read/print access with personal-request exemption.
-        3) Sync Leave and Material printing with translated Arabic-only notices.
+    DETAILS / التفاصيل:
+    AR:
+            1) عكس عمودي واجهة طلب الإجازة وإخفاء حالة اعتماد المدير.
+            2) إعادة تطبيق صلاحية HR User للقراءة والطباعة مع استثناء طلبه الشخصي.
+            3) مزامنة طباعة الإجازة والمواد بالنصوص المترجمة العربية فقط.
+
+        EN:
+            1) Swap Leave form columns and hide manager approval status.
+            2) Reapply HR User read/print access with personal-request exemption.
+            3) Sync Leave and Material printing with translated Arabic-only notices.
     """
     apply_leave_application_layout_preferences()
     setup_hr_user_read_only_permissions()

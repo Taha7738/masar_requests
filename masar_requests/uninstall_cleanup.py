@@ -1,3 +1,8 @@
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `uninstall_cleanup`.
+EN: Masar application functionality implemented by the `uninstall_cleanup` module.
+"""
+
 # =======================================================================
 # AR: تنظيف التخصيصات عند إزالة التطبيق
 # EN: Cleanup customizations upon app uninstallation
@@ -15,6 +20,10 @@ from masar_requests.setup_attendance_request import (
 def cleanup_attendance_request():
     # AR: حذف الحقول وسير العمل الخاصة بطلب الحضور.
     # EN: Delete Attendance Request fields and workflow owned by the app.
+    """
+    AR: تنفيذ `cleanup` الحضور الطلب ضمن وحدة `uninstall_cleanup`.
+    EN: Execute cleanup attendance request within the `uninstall_cleanup` module.
+    """
     custom_field_names = frappe.get_all(
         "Custom Field",
         filters={

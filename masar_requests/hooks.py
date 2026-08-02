@@ -1,3 +1,8 @@
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `hooks`.
+EN: Masar application functionality implemented by the `hooks` module.
+"""
+
 # AR: تعريف اسم التطبيق برمجياً / EN: Define the app name programmatically
 app_name = "masar_requests"
 
@@ -64,8 +69,14 @@ doctype_js = {
     # AR: تخصيص نموذج طلب المواد
     # EN: Customize the Material Request form
     "Material Request": "public/js/material_request.js",
-    # تخصيص نموذج نوع المهمه الرسمية
-    "Attendance Request": "public/js/attendance_request.js",
+
+    # AR:
+    # Official Duty Request يحمّل ملفه القياسي الموجود داخل مجلد DocType،
+    # لذلك لا يحتاج doctype_js. Attendance Request متروك كلياً لـ HRMS.
+    #
+    # EN:
+    # Official Duty Request loads its standard DocType JavaScript file.
+    # Attendance Request is intentionally left entirely to native HRMS.
 }
 
 
@@ -122,9 +133,9 @@ permission_query_conditions = {
         "masar_requests.leave_application_permissions."
         "leave_application_query"
     ),
-    "Attendance Request": (
-        "masar_requests.attendance_request_permissions."
-        "attendance_request_query"
+    "Official Duty Request": (
+        "masar_requests.official_duty_request_permissions."
+        "official_duty_request_query"
     ),
 }
 
@@ -149,9 +160,9 @@ has_permission = {
         "masar_requests.leave_application_permissions."
         "leave_application_has_permission"
     ),
-    "Attendance Request": (
-        "masar_requests.attendance_request_permissions."
-        "attendance_request_has_permission"
+    "Official Duty Request": (
+        "masar_requests.official_duty_request_permissions."
+        "official_duty_request_has_permission"
     ),
     # AR: HR User يفتح ويطبع طلبات المواد دون تعديل أو إجراء Workflow.
     # EN: HR User may open and print Material Requests without editing/workflow actions.
@@ -179,11 +190,12 @@ override_doctype_class = {
         "masar_requests.leave_application_partial_leave."
         "CustomLeaveApplication"
     ),
-    # AR: إصلاح آمن لجدول تحذيرات Attendance Request في Frappe/HRMS v15.
-    # EN: Safe Attendance Request warning-table override for Frappe/HRMS v15.
-    "Attendance Request": (
-        "masar_requests.attendance_request_override."
-        "CustomAttendanceRequest"
+
+    # AR: تصحيح كسر ربع اليوم والإجازة بالساعات في Payroll مع إبقاء بقية المنطق قياسياً.
+    # EN: Correct quarter-day/hourly fractions in Payroll while preserving native logic.
+    "Salary Slip": (
+        "masar_requests.salary_slip_partial_leave."
+        "CustomSalarySlip"
     ),
 }
 
@@ -243,14 +255,23 @@ doc_events = {
     },
 
     "Shift Type": {
-        # AR:
-        # توليد أو معالجة أوقات الوردية قبل حفظ Shift Type.
-        #
-        # EN:
-        # Generate or process shift times before saving Shift Type.
-        "before_save": (
+        # AR: استكمال أيام الأسبوع قبل التحقق دون مسح تعديلات المستخدم.
+        # EN: Fill missing weekdays before validation without erasing user edits.
+        "before_validate": (
             "masar_requests.overrides.shift_type."
             "generate_shift_times"
+        ),
+        # AR: التحقق من الأيام والأوقات والوردية الليلية والبصمات غير المعالجة.
+        # EN: Validate weekdays, times, overnight shifts, and unprocessed checkins.
+        "validate": (
+            "masar_requests.overrides.shift_type."
+            "validate_shift_times"
+        ),
+        # AR: مسح كاش الوردية بعد التحديث لتوحيد النتائج في كل المستندات.
+        # EN: Clear Shift Type cache after update for consistent cross-document results.
+        "on_update": (
+            "masar_requests.overrides.shift_type."
+            "clear_shift_schedule_cache"
         ),
     },
 
@@ -313,26 +334,111 @@ doc_events = {
         ),
     },
 
-    "Attendance Request": {
-        "validate": (
-            "masar_requests.attendance_request_permissions."
-            "validate_attendance_request"
-        ),
-        "after_insert": (
-            "masar_requests.attendance_request_permissions."
-            "sync_attendance_request_shares"
-        ),
-        "on_update": (
-            "masar_requests.attendance_request_permissions."
-            "on_update_attendance_request"
-        ),
-        "before_submit": (
-            "masar_requests.attendance_request_permissions."
-            "before_submit_attendance_request"
-        ),
-        "on_submit": (
-            "masar_requests.attendance_request_permissions."
-            "on_submit_attendance_request"
-        ),
-    },
 }
+
+
+# ======================================================
+# AR: مهام المعالجة الدورية
+# EN: Scheduled reconciliation jobs
+# ======================================================
+
+# AR:
+# يعاد فحص المهام المعتمدة كل ساعة. هذا ضروري للطلبات المعتمدة قبل
+# نهاية الوردية، ولا ينشئ أي سجلات Employee Checkin وهمية.
+#
+# EN:
+# Re-check approved duties hourly. This handles requests approved before
+# shift end and never fabricates Employee Checkin records.
+scheduler_events = {
+    "hourly": [
+        # AR: تسوية المهام الرسمية بعد نهاية الوردية ومزامنة البصمات.
+        # EN: Reconcile official duties after shift end and checkin synchronization.
+        "masar_requests.official_duty_engine.process_pending_official_duties",
+
+        # AR: تسجيل إجازة ربع اليوم/الساعات دون حجب Auto Attendance.
+        # EN: Register quarter-day/hourly leave without blocking Auto Attendance.
+        "masar_requests.leave_application_partial_leave.process_pending_partial_leave_attendance",
+    ],
+}
+
+
+# MASAR_STRICT_REQUEST_VISIBILITY_V21_9
+# Final participant/stage visibility overrides.
+permission_query_conditions.update(
+    {
+        "Leave Application": (
+            "masar_requests.strict_request_visibility."
+            "leave_application_query"
+        ),
+        "Official Duty Request": (
+            "masar_requests.strict_request_visibility."
+            "official_duty_request_query"
+        ),
+        "Material Request": (
+            "masar_requests.strict_request_visibility."
+            "material_request_query"
+        ),
+    }
+)
+
+has_permission.update(
+    {
+        "Leave Application": (
+            "masar_requests.strict_request_visibility."
+            "leave_application_has_permission"
+        ),
+        "Official Duty Request": (
+            "masar_requests.strict_request_visibility."
+            "official_duty_request_has_permission"
+        ),
+        "Material Request": (
+            "masar_requests.strict_request_visibility."
+            "material_request_has_permission"
+        ),
+    }
+)
+
+
+# MASAR_UNIFIED_SECRETARY_ACCESS_V22
+def _masar_append_doc_event(doctype, event, handler):
+    """
+    AR: تنفيذ `masar` `append` المستند `event` ضمن وحدة `hooks`.
+    EN: Execute masar append doc event within the `hooks` module.
+    """
+    current = doc_events.setdefault(doctype, {}).get(event)
+
+    if not current:
+        doc_events[doctype][event] = handler
+        return
+
+    if isinstance(current, str):
+        if current != handler:
+            doc_events[doctype][event] = [current, handler]
+        return
+
+    if handler not in current:
+        current.append(handler)
+
+
+for _secretary_doctype in (
+    "Leave Application",
+    "Official Duty Request",
+    "Material Request",
+):
+    for _secretary_event in (
+        "after_insert",
+        "on_update",
+        "on_update_after_submit",
+        "on_submit",
+    ):
+        _masar_append_doc_event(
+            _secretary_doctype,
+            _secretary_event,
+            "masar_requests.secretary_access.sync_secretary_access",
+        )
+
+    _masar_append_doc_event(
+        _secretary_doctype,
+        "on_cancel",
+        "masar_requests.secretary_access.revoke_secretary_access",
+    )

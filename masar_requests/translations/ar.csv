@@ -66,7 +66,7 @@ ManagDirect Supervisorer Approve,اعتماد المسؤول المباشر,
 ✅ Good news: Material Request ({0}) has been finally approved and is now being processed.,✅ بشرى: تم الاعتماد النهائي لطلب المواد ({0}) وهو قيد التنفيذ الآن.,
 📦 Ready for Issue: Document ({0}) is finally approved and waiting for you to issue materials.,📦 جاهز للصرف: المعاملة ({0}) تم اعتمادها نهائياً بانتظار صرفك للمواد.,
 🔄 Request Movement:  ⚠️ إجراء مطلوب: طلب مواد جديد ({0}) بانتظار مراجعتك واعتمادك.   Your request ({0}) has moved to stage: {1}.,🔄 حركة طلب: طلبك رقم ({0}) انتقل إلى مرحلة: {1}.,
-⚠️ Action Required: A new Material Request ({0}) is waiting for your review and approval.,⚠️ إجراء مطلوب: طلب مواد جديد ({0}) بانتظار مراجعتك واعتمادك., 
+⚠️ Action Required: A new Material Request ({0}) is waiting for your review and approval.,⚠️ إجراء مطلوب: طلب مواد جديد ({0}) بانتظار مراجعتك واعتمادك.,
 ⚠️ Action Required: Document ({0}) has reached your department and is waiting for approval.,⚠️ إجراء مطلوب: المعاملة ({0}) وصلت إلى إدارتك بانتظار الاعتماد.,
 <b>Alert:</b> All items are out of stock. The request has been fully converted to a (Purchase) request.,<b>تنبيه:</b> جميع الأصناف غير متوفرة. تم تحويل الطلب بالكامل إلى (طلب شراء).,
 Auto-generated from Document: {0},طلب منبثق آلياً من المعاملة رقم: {0},
@@ -134,14 +134,14 @@ Setting up Material Requests...,جارٍ إعداد طلبات المواد...,
 Material Request setup completed successfully.,اكتمل إعداد طلبات المواد بنجاح.,
 Material Request %s does not exist.,طلب المواد %s غير موجود.,
 Material Request Auto Share Failed,فشلت المشاركة التلقائية لطلب المواد,
-Material Request Notification Error,حدث خطأ في إشعارات طلب المواد,
+Material Request Notification Error,خطأ في إشعار طلب المواد,
 "Quantity field is locked. Only Warehouse Manager during Stock Check, MR Qty Modifier, or System Manager can edit it.",حقل الكمية مقفل. لا يمكن تعديله إلا بواسطة أمين المخزن أثناء فحص المخزون، أو مستخدم يحمل دور MR Qty Modifier، أو مدير النظام.,
 Rate fields are locked after saving. You need the 'MR Financial Modifier' role to edit them.,حقول السعر مقفلة بعد الحفظ. تحتاج إلى دور MR Financial Modifier لتعديلها.,
 Your Material Request %s has been rejected.,تم رفض طلب المواد الخاص بك رقم %s.,
 Your Material Request %s has been fully approved and is now in progress.,تم اعتماد طلب المواد الخاص بك رقم %s اعتمادًا نهائيًا، وهو الآن قيد التنفيذ.,
 Your Material Request %s has moved to workflow state: %s.,انتقل طلب المواد الخاص بك رقم %s إلى حالة سير العمل: %s.,
-Action required: Material Request %s is waiting for your approval.,إجراء مطلوب: طلب المواد رقم %s بانتظار اعتمادك.,
-Action required: Material Request %s has reached your department and is awaiting approval.,إجراء مطلوب: وصل طلب المواد رقم %s إلى إدارتك وهو بانتظار الاعتماد.,
+Action required: Material Request %s is waiting for your approval.,إجراء مطلوب: طلب المواد %s بانتظار اعتمادك.,
+Action required: Material Request %s has reached your department and is awaiting approval.,إجراء مطلوب: وصل طلب المواد %s إلى إدارتك وهو بانتظار الاعتماد.,
 All items are out of stock. The request has been converted to a Purchase request.,جميع الأصناف غير متوفرة في المخزون. تم تحويل الطلب إلى طلب شراء.,
 Auto-generated from Material Request %s.,تم إنشاؤه تلقائيًا من طلب المواد رقم %s.,
 Action required: Auto-generated Purchase Request %s is waiting for Accounts approval.,إجراء مطلوب: طلب الشراء المنشأ تلقائيًا رقم %s بانتظار اعتماد الحسابات.,
@@ -284,15 +284,209 @@ HR User is allowed to view and print requests only. Workflow actions and documen
 ⚠️ Leave Request Action Required: Request from {0} reached HR.,⚠️ إجراء مطلوب على طلب إجازة: وصل طلب {0} إلى الموارد البشرية.,
 ✅ Leave Request Approved: Your leave application ({0}) has been fully approved.,✅ تم اعتماد طلب الإجازة: تم اعتماد طلب إجازتك رقم ({0}) اعتمادًا نهائيًا.,
 ❌ Leave Request Rejected: Your leave application ({0}) has been rejected.,❌ تم رفض طلب الإجازة: تم رفض طلب إجازتك رقم ({0}).,
-"Bypassed substitute employee approval","تم تجاوز موافقة الموظف البديل",
-"Bypassed direct manager approval","تم تجاوز اعتماد المسؤول المباشر",
-"Bypassed direct supervisor approval","تم تجاوز اعتماد المسؤول المباشر",
-"Bypassed warehouse manager approval","تم تجاوز اعتماد مسؤول المخزن",
-"Bypassed HR manager approval","تم تجاوز اعتماد الموارد البشرية",
-"Bypassed accounts manager approval","تم تجاوز اعتماد المدير المالي",
-"Bypassed secretary general approval","تم تجاوز اعتماد الأمين العام",
-"Bypassed university president approval","تم تجاوز اعتماد رئيس الجامعة",
-"Finally approved by:","تم الاعتماد النهائي من قبل:",
-"Approved by:","تم الاعتماد من قبل:",
-"Not applicable","لا ينطبق",
-"HR User is allowed to view and print other employees' requests only. You may create and process your own request according to the normal workflow.","يسمح لمستخدم الموارد البشرية بعرض طلبات الموظفين الآخرين وطباعتها فقط، ويمكنه إنشاء طلبه الشخصي والتعامل معه وفق سير العمل الطبيعي.",
+Bypassed substitute employee approval,تم تجاوز موافقة الموظف البديل,
+Bypassed direct manager approval,تم تجاوز اعتماد المسؤول المباشر,
+Bypassed direct supervisor approval,تم تجاوز اعتماد المسؤول المباشر,
+Bypassed warehouse manager approval,تم تجاوز اعتماد مسؤول المخزن,
+Bypassed HR manager approval,تم تجاوز اعتماد الموارد البشرية,
+Bypassed accounts manager approval,تم تجاوز اعتماد المدير المالي,
+Bypassed secretary general approval,تم تجاوز اعتماد الأمين العام,
+Bypassed university president approval,تم تجاوز اعتماد رئيس الجامعة,
+Finally approved by:,تم الاعتماد النهائي من قبل:,
+Approved by:,تم الاعتماد من قبل:,
+Not applicable,لا ينطبق,
+HR User is allowed to view and print other employees' requests only. You may create and process your own request according to the normal workflow.,يسمح لمستخدم الموارد البشرية بعرض طلبات الموظفين الآخرين وطباعتها فقط، ويمكنه إنشاء طلبه الشخصي والتعامل معه وفق سير العمل الطبيعي.,
+Official Duty Request,طلب مهمة رسمية
+Official Duty Attendance Detail,تفاصيل تسوية حضور المهمة الرسمية
+Official Duty Period,فترة المهمة الرسمية
+Duty Type,نوع المهمة
+Hourly,بالساعات
+Full Day,يوم كامل
+No Attendance Adjustment,بدون تسوية حضور
+Mission Details,تفاصيل المهمة
+Assignment Details,تفاصيل التكليف
+Attendance Reconciliation,تسوية الحضور
+Official Duty Reconciliation,تسوية حضور المهمة الرسمية
+Processing Status,حالة المعالجة
+Processing Message,رسالة المعالجة
+Pending,قيد الانتظار
+Waiting for Shift End,بانتظار نهاية الوردية
+Partially Reconciled,تمت التسوية جزئياً
+Reconciled,تمت التسوية
+Manual Review,مراجعة يدوية
+Failed,فشلت المعالجة
+Legacy Linked,مرتبط بسجل قديم
+Official Duty Hours,ساعات المهمة الرسمية
+Physical Working Hours,ساعات العمل الفعلية داخل المؤسسة
+Credited Working Hours,ساعات العمل المحتسبة
+Uncovered Hours,الساعات غير المغطاة
+Last Reconciliation On,آخر وقت للتسوية
+Daily Attendance Details,تفاصيل الحضور اليومية
+Approval Audit,سجل الاعتمادات
+Direct Manager Employee,الموظف المسؤول المباشر
+Direct Manager Approved By,اعتمد المسؤول المباشر بواسطة
+Direct Manager Approved On,وقت اعتماد المسؤول المباشر
+Legacy Attendance Request,طلب الحضور القديم
+Reconciliation Status,حالة التسوية
+Duty Start,بداية المهمة
+Duty End,نهاية المهمة
+Checkin Count,عدد البصمات
+First Checkin,أول بصمة
+Last Checkin,آخر بصمة
+Missing Checkout Explained,تم تفسير بصمة الانصراف المفقودة
+Attendance Created By Request,تم إنشاء الحضور بواسطة الطلب
+Previous Attendance Status,حالة الحضور السابقة
+Previous Half Day Status,حالة النصف الآخر السابقة
+Message,الرسالة
+Official Duty Reconciliation Status,حالة تسوية المهمة الرسمية
+Official Duty Note,ملاحظة المهمة الرسمية
+Partial Leave Reconciliation,تسوية الإجازة الجزئية
+Partial Leave Application,طلب الإجازة الجزئية
+Partial Leave Type,نوع الإجازة الجزئية
+Partial Leave Hours,ساعات الإجازة الجزئية
+Partial Leave Day Fraction,كسر يوم الإجازة الجزئية
+Partial Leave From Time,بداية الإجازة الجزئية
+Partial Leave To Time,نهاية الإجازة الجزئية
+Partial Leave Reconciliation Status,حالة تسوية الإجازة الجزئية
+Attendance Created for Partial Leave,تم إنشاء الحضور للإجازة الجزئية
+Previous Leave Type,نوع الإجازة السابق
+Previous Leave Application,طلب الإجازة السابق
+Reconcile Attendance,إعادة تسوية الحضور
+Reconciling attendance...,جارٍ تسوية الحضور...
+Attendance reconciliation completed.,اكتملت تسوية الحضور.
+Leaving Time and Return Time cannot be the same.,لا يمكن أن يتساوى وقت المغادرة ووقت العودة.
+Only an approved Official Duty Request can be reconciled.,لا يمكن تسوية الحضور إلا لطلب مهمة رسمية معتمد.
+Only HR Manager or System Manager can reconcile attendance.,يمكن لمدير الموارد البشرية أو مدير النظام فقط تسوية الحضور.
+No shift is assigned to employee {0} on {1}.,لا توجد وردية مسندة للموظف {0} في {1}.
+More than one shift is assigned on {0}. Please select the Shift in the Official Duty Request.,توجد أكثر من وردية في {0}. يرجى تحديد الوردية في طلب المهمة الرسمية.
+Official Duty time must be inside the employee shift on {0}.,يجب أن تقع ساعات المهمة الرسمية داخل وردية الموظف في {0}.
+Attendance will be reconciled after the shift ends.,ستتم تسوية الحضور بعد انتهاء الوردية.
+An approved Leave Application overlaps this Official Duty date.,يوجد طلب إجازة معتمد يتداخل مع تاريخ المهمة الرسمية.
+The request and available checkins leave {0} uncovered hour(s); HR review is required.,تبقى {0} ساعة غير مغطاة بواسطة الطلب والبصمات المتاحة؛ يلزم مراجعة الموارد البشرية.
+Attendance Request {0} already covers {1}.,طلب الحضور {0} يغطي التاريخ {1} مسبقاً.
+Created from Official Duty Request {0}: {1},تم الإنشاء من طلب المهمة الرسمية {0}: {1}
+Attendance reconciled from Official Duty Request {0}. No Employee Checkin was fabricated.,تمت تسوية الحضور من طلب المهمة الرسمية {0} دون إنشاء أي بصمة موظف وهمية.
+Attendance Request was submitted but no Attendance record was found.,تم اعتماد طلب الحضور، لكن لم يتم العثور على سجل حضور مرتبط.
+Attendance is Present: {0} physical hour(s) + {1} official-duty hour(s) = {2} credited hour(s).,الحضور حاضر: {0} ساعة عمل فعلية + {1} ساعة مهمة رسمية = {2} ساعة محتسبة.
+One or more dates require HR review because some shift time is not covered.,يتطلب تاريخ واحد أو أكثر مراجعة الموارد البشرية لوجود وقت غير مغطى من الوردية.
+The request is approved and will be processed after the shift ends.,الطلب معتمد وستتم معالجته بعد انتهاء الوردية.
+Attendance reconciliation completed successfully without creating synthetic checkins.,اكتملت تسوية الحضور بنجاح دون إنشاء بصمات وهمية.
+Attendance reconciliation was reversed after cancellation.,تم عكس تسوية الحضور بعد إلغاء الطلب.
+No attendance adjustment was requested.,لم يتم طلب تعديل الحضور.
+Unexpected reconciliation error. See Error Log.,حدث خطأ غير متوقع في التسوية. راجع سجل الأخطاء.
+Reconciliation failed for: {0},فشلت التسوية للتواريخ: {0}
+Existing Attendance status {0} requires HR review.,حالة الحضور الحالية {0} تتطلب مراجعة الموارد البشرية.
+Attendance {0} is already linked to Partial Leave Application {1}.,سجل الحضور {0} مرتبط مسبقاً بطلب الإجازة الجزئية {1}.
+Attendance {0} is already marked On Leave and requires HR review.,سجل الحضور {0} مسجل كإجازة ويتطلب مراجعة الموارد البشرية.
+Not specified in legacy request,غير محدد في الطلب القديم
+Migrated from Attendance Request {0},تم الترحيل من طلب الحضور {0}
+Legacy request migrated without an achievement report.,تم ترحيل الطلب القديم دون تقرير إنجاز.
+Historical record linked to Attendance Request {0}.,تم ربط السجل التاريخي بطلب الحضور {0}.
+Official Duty Request Workflow masar_requests,سير عمل طلب المهمة الرسمية
+Masar Official Duty Request Form,نموذج مسار لطلب المهمة الرسمية
+Please sign in before creating an Official Duty Request.,يرجى تسجيل الدخول قبل إنشاء طلب مهمة رسمية.
+From Date and To Date are required.,تاريخ البداية وتاريخ النهاية مطلوبان.
+To Date cannot be before From Date.,لا يمكن أن يكون تاريخ النهاية قبل تاريخ البداية.
+Hourly Official Duty must be submitted for one date only.,يجب تقديم المهمة الرسمية بالساعات ليوم واحد فقط.
+You can create an Official Duty Request only for your own Employee record.,يمكنك إنشاء طلب مهمة رسمية لسجل الموظف الخاص بك فقط.
+Official Duty Request {0} overlaps this period.,يتداخل طلب المهمة الرسمية {0} مع هذه الفترة.
+"Only one option can be selected: Half Day, Quarter Day, or Hourly Leave.",يمكن اختيار نوع واحد فقط: نصف يوم أو ربع يوم أو إجازة بالساعات.
+Partial Leave Date is required.,تاريخ الإجازة الجزئية مطلوب.
+Employee is required.,الموظف مطلوب.
+Start Time is required.,وقت البداية مطلوب.
+End Time is required for Hourly Leave.,وقت النهاية مطلوب للإجازة بالساعات.
+No shift is assigned to this employee on the selected date.,لا توجد وردية مسندة لهذا الموظف في التاريخ المحدد.
+Leave time must be inside the employee shift.,يجب أن تقع فترة الإجازة داخل وردية الموظف.
+Close! Your actual precise balance ({0}) is insufficient for this partial request ({1} days).,الرصيد الدقيق المتاح ({0}) غير كافٍ لهذا الطلب الجزئي ({1} يوم).
+You are not allowed to view this employee's leave balance.,لا يسمح لك بعرض رصيد إجازات هذا الموظف.
+AM,ص
+PM,م
+From,من
+to,إلى
+Attendance,الحضور
+The date is a holiday and Include Holidays is not enabled.,التاريخ عطلة ولم يتم تفعيل خيار تضمين العطلات.
+No attendance adjustment was applied for the selected date range.,لم يتم تطبيق أي تعديل على الحضور للفترة المحددة.
+Previous Official Duty Attendance Status,حالة الحضور الأصلية قبل المهمة الرسمية
+Previous Official Duty Half Day Status,حالة نصف اليوم الأصلية قبل المهمة الرسمية
+Previous Official Duty Late Entry,حالة التأخير الأصلية قبل المهمة الرسمية
+Previous Official Duty Early Exit,حالة الخروج المبكر الأصلية قبل المهمة الرسمية
+Amended From,مُعدّل من
+Attendance Date,تاريخ الحضور
+Attendance is linked to another Attendance Request {0}; HR review is required.,سجل الحضور مرتبط بطلب حضور آخر {0}؛ ويلزم مراجعة الموارد البشرية.
+Cancelled,ملغى
+Company,الشركة
+Department,القسم
+Employee Name,اسم الموظف
+From Date,من تاريخ
+Include Holidays,تضمين العطلات
+Previous Early Exit,الخروج المبكر السابق
+Previous Late Entry,التأخير السابق
+Reason,السبب
+Series,التسلسل
+Shift End,نهاية الوردية
+Shift Start,بداية الوردية
+Status,الحالة
+Workflow State,حالة سير العمل
+Official Duty Request is not synchronized yet. Run bench migrate before cleanup.,لم تتم مزامنة مستند المهمة الرسمية بعد. شغّل bench migrate قبل تنفيذ التنظيف.
+Last Partial Attendance Processing,آخر معالجة للحضور الجزئي
+Leave Type,نوع الإجازة
+Partial Attendance,سجل الحضور الجزئي
+Partial Attendance Message,رسالة معالجة الحضور الجزئي
+Partial Attendance Reconciliation,تسوية الحضور للإجازة الجزئية
+Partial Attendance Status,حالة معالجة الحضور الجزئي
+Partial leave is approved and will be registered in Attendance after the shift and checkin synchronization finish.,تم اعتماد الإجازة الجزئية، وستُسجل في الحضور بعد انتهاء الوردية واكتمال مزامنة البصمات.
+Partial leave was registered in Attendance with the exact hour/day fraction.,تم تسجيل الإجازة الجزئية في الحضور بالساعات وكسر اليوم الدقيق.
+Partial-leave Attendance reconciliation failed. See Error Log.,فشلت تسوية حضور الإجازة الجزئية. راجع سجل الأخطاء.
+Partial-leave Attendance reconciliation was cancelled.,تم إلغاء تسوية حضور الإجازة الجزئية.
+The partial leave and available checkins leave {0} uncovered hour(s); HR review is required.,تبقى {0} ساعة غير مغطاة بواسطة الإجازة الجزئية والبصمات المتاحة؛ ويلزم مراجعة الموارد البشرية.
+Partial leave coverage: {0} physical hour(s) + {1} leave hour(s) = {2} credited hour(s); {3} uncovered hour(s).,تغطية الإجازة الجزئية: {0} ساعة عمل فعلية + {1} ساعة إجازة = {2} ساعة محتسبة؛ والمتبقي غير المغطى {3} ساعة.
+Salary Slip cannot be calculated until partial-leave Attendance reconciliation is completed for: {0}.,لا يمكن احتساب قسيمة الراتب حتى تكتمل تسوية حضور الإجازة الجزئية للطلبات التالية: {0}.
+Partial Leave Attendance Pending,تسوية حضور الإجازة الجزئية معلقة
+ and {0} more, و{0} أخرى
+Attendance will be reconciled after the shift and checkin synchronization finish.,ستتم تسوية الحضور بعد انتهاء الوردية واكتمال مزامنة البصمات.
+Enable Variable Weekday Times,تفعيل أوقات وردية متغيرة حسب أيام الأسبوع
+Variable Weekday Times,أوقات الوردية المتغيرة حسب أيام الأسبوع
+Variable Times Effective From,بدء سريان الأوقات المتغيرة من تاريخ
+Weekday Time Table,جدول أوقات أيام الأسبوع
+Populate Missing Weekdays,إضافة أيام الأسبوع الناقصة
+Reset Weekday Times to Standard,إعادة أوقات الأيام إلى الوقت القياسي
+This will replace all weekday times with the standard Start Time and End Time. Continue?,سيتم استبدال أوقات جميع الأيام بوقت البداية والنهاية القياسيين. هل تريد المتابعة؟
+Invalid day in Variable Weekday Times: {0},يوجد يوم غير صالح في جدول أوقات الوردية المتغيرة: {0}
+Day {0} is repeated in Variable Weekday Times.,اليوم {0} مكرر في جدول أوقات الوردية المتغيرة.
+Start Time and End Time are required for {0}.,وقت البداية والنهاية مطلوبان لليوم {0}.
+Start time and end time cannot be same for {0}.,لا يمكن أن يتساوى وقت البداية والنهاية لليوم {0}.
+"The shift window for {0}, including check-in/out margins, must be less than 24 hours.",يجب أن تكون نافذة وردية يوم {0} مع هوامش الدخول والخروج أقل من 24 ساعة.
+Variable Weekday Times must contain all seven days: {0},يجب أن يحتوي جدول أوقات الوردية المتغيرة على أيام الأسبوع السبعة: {0}
+Mark attendance for existing check-in/out logs before changing variable shift times.,اعتمد الحضور لسجلات الدخول والخروج الموجودة قبل تغيير أوقات الوردية المتغيرة.
+More than one shift is assigned on {0}. Please select the Shift explicitly.,تم إسناد أكثر من وردية بتاريخ {0}. يرجى تحديد الوردية صراحةً.
+Empty,فارغ
+Sunday,الأحد
+Monday,الاثنين
+Tuesday,الثلاثاء
+Wednesday,الأربعاء
+Thursday,الخميس
+Friday,الجمعة
+Saturday,السبت
+Use a different start and end time for each weekday. Holiday dates remain controlled by the standard Holiday List.,استخدم وقت بداية ونهاية مختلفًا لكل يوم من أيام الأسبوع. تظل تواريخ العطلات خاضعة لقائمة العطلات القياسية.
+Optional. Before this date the standard Start Time and End Time are used. Leave blank to apply the weekday table to all dates.,اختياري. قبل هذا التاريخ تُستخدم أوقات البداية والنهاية القياسية. اتركه فارغًا لتطبيق جدول الأيام على جميع التواريخ.
+Set one row for every weekday. Weekly offs and official holidays must continue to be configured in Holiday List.,حدد صفًا لكل يوم من أيام الأسبوع. يجب الاستمرار في إعداد الإجازات الأسبوعية والعطلات الرسمية داخل قائمة العطلات.
+The installed HRMS version is not compatible with the V21 variable shift timing layer. Native HRMS remains unchanged; review compatibility before enabling the feature.,إصدار HRMS المثبت غير متوافق مع طبقة أوقات الوردية المتغيرة V21. بقي HRMS القياسي دون تغيير؛ راجع التوافق قبل تفعيل الميزة.
+This will replace all working-weekday times with the standard Start Time and End Time. Continue?,سيتم استبدال أوقات جميع أيام العمل بوقت البداية والنهاية القياسيين. هل تريد المتابعة؟
+No working weekdays are available after excluding weekly-off days from Holiday List.,لا توجد أيام عمل متاحة بعد استبعاد أيام العطلة الأسبوعية من قائمة العطلات.
+Weekly-off days must not appear in Variable Weekday Times: {0},يجب ألا تظهر أيام العطلة الأسبوعية في جدول أوقات الوردية المتغيرة: {0}
+Variable Weekday Times must contain all working weekdays: {0},يجب أن يحتوي جدول أوقات الوردية المتغيرة على جميع أيام العمل: {0}
+Use a different start and end time for each working weekday. Recurring weekly-off days are excluded from the table; date-specific holidays remain controlled by HRMS.,استخدم وقت بداية ونهاية مختلفًا لكل يوم عمل. تُستبعد أيام العطلة الأسبوعية المتكررة من الجدول، بينما تظل العطلات المرتبطة بتواريخ محددة تحت إدارة HRMS.
+Set one row for every working weekday. Recurring weekly-off days from the selected Holiday List are excluded automatically; one-off official holidays remain date-based in HRMS.,حدد صفًا لكل يوم عمل. تُستبعد أيام العطلة الأسبوعية المتكررة من قائمة العطلات المحددة تلقائيًا، بينما تبقى العطلات الرسمية المفردة مرتبطة بتواريخها داخل HRMS.
+Manual Attendance Reconciliation,التسوية اليدوية للحضور
+Administratively Confirmed Hours,الساعات المؤكدة إداريًا
+Currently Credited Hours,الساعات المحتسبة حاليًا
+HR Reconciliation Notes,ملاحظات تسوية الموارد البشرية
+Apply Manual Reconciliation,تنفيذ التسوية اليدوية
+Confirmed Remaining Hours,تأكيد الساعات المتبقية
+Settle Uncovered Hours,تسوية الساعات غير المغطاة
+Estimated Rate,السعر التقديري
+Estimated Amount,المبلغ التقديري
+Estimated Request Total,الإجمالي التقديري للطلب
+Official Duty Request {0} requires manual attendance review.,طلب المهمة الرسمية {0} يحتاج إلى مراجعة يدوية للحضور.
+"Attendance reconciliation completed, including HR-confirmed working hours.",اكتملت تسوية الحضور مع احتساب الساعات التي أكدتها الموارد البشرية.
+HR manually confirmed {0} uncovered hour(s) for Official Duty Request {1}.,أكدت الموارد البشرية إداريًا {0} من الساعات غير المغطاة لطلب المهمة الرسمية {1}.

@@ -1,0 +1,17 @@
+Masar Requests V21 source provenance
+====================================
+
+User-supplied source archive:
+/mnt/data/masar_requestsاخر اصدار 30-7-2026.zip
+
+V20 baseline used for V21 implementation:
+/mnt/data/inspect_v20
+
+V21 working tree:
+/mnt/data/masar_requests_v21_work
+
+Scope:
+- Preserve all V20 Official Duty and partial-leave work.
+- Replace the unreliable Shift Type weekday patch with a guarded central integration.
+- Correct the accidental Leave Application JavaScript content in material_request.js.
+- No HRMS core source files were modified.

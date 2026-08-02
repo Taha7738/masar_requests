@@ -1,3 +1,8 @@
+"""
+AR: إعداد وتهيئة مكونات التطبيق ضمن الوحدة `setup_attendance_request`.
+EN: Application setup and configuration routines for the `setup_attendance_request` module.
+"""
+
 # ============================================================================
 # AR: إعداد طلب المهمة الرسمية (Attendance Request)
 # EN: Official Duty (Attendance Request) setup
@@ -83,13 +88,17 @@ ATTENDANCE_CUSTOM_FIELDNAMES = (
 
 def setup_attendance_request_all():
     """
-    AR:
-        إعادة بناء حقول المهمة الرسمية، ترتيب الواجهة، الصلاحيات، وسير العمل.
-        يعتمد سير العمل نفس مراحل طلب الإجازة، والتقرير مطلوب من أول إنشاء.
+    AR: تنفيذ إعداد الحضور الطلب `all` ضمن وحدة `setup_attendance_request`.
+    EN: Execute setup attendance request all within the `setup_attendance_request` module.
 
-    EN:
-        Rebuild Official Duty fields, layout, permissions, and workflow.
-        The workflow mirrors Leave Application and the report is required at creation.
+    DETAILS / التفاصيل:
+    AR:
+            إعادة بناء حقول المهمة الرسمية، ترتيب الواجهة، الصلاحيات، وسير العمل.
+            يعتمد سير العمل نفس مراحل طلب الإجازة، والتقرير مطلوب من أول إنشاء.
+
+        EN:
+            Rebuild Official Duty fields, layout, permissions, and workflow.
+            The workflow mirrors Leave Application and the report is required at creation.
     """
     print("Setting up Official Duty (Attendance Request)...")
 
@@ -110,8 +119,8 @@ def setup_attendance_request_all():
 
 def reset_attendance_request_layout():
     """
-    AR: حذف تعريفات الحقول المملوكة للتطبيق فقط ثم إرجاع آخر حقل قياسي كمرساة.
-    EN: Remove app-owned field metadata only and return the last native field anchor.
+    AR: تنفيذ `reset` الحضور الطلب `layout` ضمن وحدة `setup_attendance_request`.
+    EN: Execute reset attendance request layout within the `setup_attendance_request` module.
     """
     stale_fields = frappe.get_all(
         "Custom Field",
@@ -153,7 +162,10 @@ def reset_attendance_request_layout():
 
 
 def _hidden_field(fieldname, label, insert_after, fieldtype="Data", options=None):
-    """AR: إنشاء حقل تدقيق مخفي. EN: Build a hidden audit field."""
+    """
+    AR: تنفيذ `hidden` الحقل ضمن وحدة `setup_attendance_request`.
+    EN: Execute hidden field within the `setup_attendance_request` module.
+    """
     field = {
         "fieldname": fieldname,
         "fieldtype": fieldtype,
@@ -173,13 +185,17 @@ def _hidden_field(fieldname, label, insert_after, fieldtype="Data", options=None
 
 def get_attendance_custom_fields(standard_anchor):
     """
-    AR:
-        الموظف البديل تحت الموظف، الوردية تحته، تفاصيل المهمة في ثلاثة أعمدة،
-        وتقرير الإنجاز والمرفق ظاهران من أول الطلب دون دورة اعتماد مستقلة.
+    AR: تنفيذ استرجاع الحضور `custom` الحقول ضمن وحدة `setup_attendance_request`.
+    EN: Execute get attendance custom fields within the `setup_attendance_request` module.
 
-    EN:
-        Place Substitute under Employee, Shift below it, duty details in three columns,
-        and show the report/attachment from creation without a separate report workflow.
+    DETAILS / التفاصيل:
+    AR:
+            الموظف البديل تحت الموظف، الوردية تحته، تفاصيل المهمة في ثلاثة أعمدة،
+            وتقرير الإنجاز والمرفق ظاهران من أول الطلب دون دورة اعتماد مستقلة.
+
+        EN:
+            Place Substitute under Employee, Shift below it, duty details in three columns,
+            and show the report/attachment from creation without a separate report workflow.
     """
     depends_on_duty = 'eval:doc.reason == "On Duty"'
     approval_options = "\n".join(
@@ -416,7 +432,10 @@ def get_attendance_custom_fields(standard_anchor):
 
 
 def create_attendance_custom_fields(layout_anchor=None):
-    """AR: إنشاء حقول المهمة الرسمية. EN: Create Official Duty custom fields."""
+    """
+    AR: تنفيذ إنشاء الحضور `custom` الحقول ضمن وحدة `setup_attendance_request`.
+    EN: Execute create attendance custom fields within the `setup_attendance_request` module.
+    """
     if not layout_anchor:
         meta = frappe.get_meta(ATTENDANCE_DOCTYPE, cached=False)
         if not meta.fields:
@@ -430,7 +449,10 @@ def create_attendance_custom_fields(layout_anchor=None):
 
 
 def configure_employee_link_display():
-    """AR: عرض اسم الموظف داخل روابط Employee. EN: Show Employee name in Link fields."""
+    """
+    AR: تنفيذ `configure` الموظف `link` `display` ضمن وحدة `setup_attendance_request`.
+    EN: Execute configure employee link display within the `setup_attendance_request` module.
+    """
     frappe.db.set_value(
         "DocType", "Employee", "title_field", "employee_name", update_modified=False
     )
@@ -440,7 +462,10 @@ def configure_employee_link_display():
 
 
 def _ensure_default_company():
-    """AR: ضمان وجود شركة افتراضية قبل إخفائها. EN: Ensure a default Company before hiding it."""
+    """
+    AR: تنفيذ ضمان `default` `company` ضمن وحدة `setup_attendance_request`.
+    EN: Execute ensure default company within the `setup_attendance_request` module.
+    """
     meta = frappe.get_meta(ATTENDANCE_DOCTYPE, cached=False)
     company_field = meta.get_field("company")
     if not company_field:
@@ -464,7 +489,10 @@ def _ensure_default_company():
 
 
 def apply_attendance_request_field_properties():
-    """AR: تطبيق الإخفاء والقيم الافتراضية. EN: Apply visibility and default properties."""
+    """
+    AR: تنفيذ تطبيق الحضور الطلب الحقل `properties` ضمن وحدة `setup_attendance_request`.
+    EN: Execute apply attendance request field properties within the `setup_attendance_request` module.
+    """
     _ensure_default_company()
     meta = frappe.get_meta(ATTENDANCE_DOCTYPE, cached=False)
 
@@ -507,7 +535,10 @@ def apply_attendance_request_field_properties():
 
 
 def _get_attendance_shift_fieldname(meta):
-    """AR: تحديد حقل الوردية المتوفر. EN: Resolve the Shift field available in HRMS."""
+    """
+    AR: تنفيذ استرجاع الحضور الوردية `fieldname` ضمن وحدة `setup_attendance_request`.
+    EN: Execute get attendance shift fieldname within the `setup_attendance_request` module.
+    """
     return next(
         (
             candidate
@@ -520,8 +551,8 @@ def _get_attendance_shift_fieldname(meta):
 
 def apply_attendance_request_field_order():
     """
-    AR: فرض ترتيب الموظف، الموظف البديل، ثم الوردية.
-    EN: Force Employee, Substitute, then Shift at the top of the form.
+    AR: تنفيذ تطبيق الحضور الطلب الحقل `order` ضمن وحدة `setup_attendance_request`.
+    EN: Execute apply attendance request field order within the `setup_attendance_request` module.
     """
     frappe.clear_cache(doctype=ATTENDANCE_DOCTYPE)
     meta = frappe.get_meta(ATTENDANCE_DOCTYPE, cached=False)
@@ -555,7 +586,10 @@ def apply_attendance_request_field_order():
 
 
 def fix_attendance_standard_permissions():
-    """AR: السماح بروابط الموظفين مع User Permissions. EN: Allow Employee links despite User Permissions."""
+    """
+    AR: تنفيذ `fix` الحضور `standard` الصلاحيات ضمن وحدة `setup_attendance_request`.
+    EN: Execute fix attendance standard permissions within the `setup_attendance_request` module.
+    """
     make_property_setter(
         ATTENDANCE_DOCTYPE,
         "employee",
@@ -566,7 +600,10 @@ def fix_attendance_standard_permissions():
 
 
 def validate_attendance_request_layout(layout_anchor):
-    """AR: التحقق الدفاعي من ترتيب الحقول. EN: Defensively validate the final field order."""
+    """
+    AR: تنفيذ التحقق من صحة الحضور الطلب `layout` ضمن وحدة `setup_attendance_request`.
+    EN: Execute validate attendance request layout within the `setup_attendance_request` module.
+    """
     frappe.clear_cache(doctype=ATTENDANCE_DOCTYPE)
     meta = frappe.get_meta(ATTENDANCE_DOCTYPE, cached=False)
     field_order = [field.fieldname for field in meta.fields]
@@ -604,7 +641,10 @@ def validate_attendance_request_layout(layout_anchor):
 
 
 def create_attendance_workflow_prerequisites():
-    """AR: إنشاء حالات وإجراءات سير العمل المطلوبة. EN: Create required workflow states/actions."""
+    """
+    AR: تنفيذ إنشاء الحضور سير العمل `prerequisites` ضمن وحدة `setup_attendance_request`.
+    EN: Execute create attendance workflow prerequisites within the `setup_attendance_request` module.
+    """
     states = [
         ATTENDANCE_STATE_DRAFT,
         ATTENDANCE_STATE_WAITING_SUBSTITUTE,
@@ -639,8 +679,8 @@ def create_attendance_workflow_prerequisites():
 
 def get_hr_manager_override_transitions():
     """
-    AR: مدير الموارد البشرية يستطيع الاعتماد النهائي أو الرفض من أي مرحلة نشطة.
-    EN: HR Manager can finally approve or reject from every active stage.
+    AR: تنفيذ استرجاع `hr` المدير `override` `transitions` ضمن وحدة `setup_attendance_request`.
+    EN: Execute get hr manager override transitions within the `setup_attendance_request` module.
     """
     active_states = (
         ATTENDANCE_STATE_DRAFT,
@@ -671,8 +711,8 @@ def get_hr_manager_override_transitions():
 
 def get_system_manager_workflow_transitions():
     """
-    AR: انتقالات مدير النظام مطابقة لمسار طلب الإجازة الجاهز.
-    EN: System Manager transitions mirror the ready Leave Application workflow.
+    AR: تنفيذ استرجاع `system` المدير سير العمل `transitions` ضمن وحدة `setup_attendance_request`.
+    EN: Execute get system manager workflow transitions within the `setup_attendance_request` module.
     """
     return [
         {
@@ -760,16 +800,20 @@ def get_system_manager_workflow_transitions():
 
 def create_attendance_workflow():
     """
-    AR:
-        إنشاء سير عمل مطابق لمسار طلب الإجازة:
-        - مع بديل: الموظف ← البديل ← المسؤول المباشر ← الموارد البشرية.
-        - دون بديل: الموظف ← المسؤول المباشر ← الموارد البشرية.
-        - المسؤول المباشر يستطيع الاعتماد أثناء انتظار البديل وتجاوزه.
-        - رفض البديل يعيد الطلب إلى الموظف لاختيار بديل جديد.
+    AR: تنفيذ إنشاء الحضور سير العمل ضمن وحدة `setup_attendance_request`.
+    EN: Execute create attendance workflow within the `setup_attendance_request` module.
 
-    EN:
-        Create a Leave-like workflow with optional substitute, manager override,
-        and substitute rejection returning the request to Draft for reselection.
+    DETAILS / التفاصيل:
+    AR:
+            إنشاء سير عمل مطابق لمسار طلب الإجازة:
+            - مع بديل: الموظف ← البديل ← المسؤول المباشر ← الموارد البشرية.
+            - دون بديل: الموظف ← المسؤول المباشر ← الموارد البشرية.
+            - المسؤول المباشر يستطيع الاعتماد أثناء انتظار البديل وتجاوزه.
+            - رفض البديل يعيد الطلب إلى الموظف لاختيار بديل جديد.
+
+        EN:
+            Create a Leave-like workflow with optional substitute, manager override,
+            and substitute rejection returning the request to Draft for reselection.
     """
     existing_workflow_name = frappe.db.get_value(
         "Workflow",

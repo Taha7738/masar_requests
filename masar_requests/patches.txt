@@ -31,3 +31,43 @@ masar_requests.patches.sync_leave_layout_hr_user_and_arabic_print_v17
 # AR: V18 لإخفاء السعر في طلب الصرف الداخلي وربط السماح بالتقييم الصفري بحركة الصرف.
 # EN: V18 hides internal-issue pricing and enables guarded zero valuation for linked issues.
 masar_requests.patches.apply_material_issue_request_ui_v18
+
+# AR: V20 فصل المهمة الرسمية عن Attendance Request وإصلاح ربع اليوم/الإجازة بالساعات.
+# EN: V20 separates Official Duty from Attendance Request and fixes precise partial leave.
+masar_requests.patches.separate_official_duty_and_partial_leave_v20
+
+# AR: V21 لتصحيح أوقات الوردية المتغيرة وربطها بالبصمة والحضور والإجازة والمهمة.
+# EN: V21 reliable weekday-specific timings across checkins, attendance, leave, and duty.
+masar_requests.patches.apply_variable_shift_times_v21
+
+# AR: V21.2 لاستبعاد أيام العطلة الأسبوعية من جدول أوقات الوردية المتغيرة.
+# EN: V21.2 excludes recurring weekly-off days from variable Shift Type rows.
+masar_requests.patches.apply_variable_shift_holiday_exclusions_v21_2
+
+# AR: V21.3 لاستعادة صلاحيات النسخة السابقة على المهمة والإجازة والمواد.
+# EN: V21.3 restores the legacy request permission model.
+masar_requests.patches.restore_legacy_permission_model_v21_3
+
+# AR: V21.4 لإضافة التسوية اليدوية الآمنة للساعات غير المغطاة.
+# EN: V21.4 adds safe HR manual settlement of uncovered hours.
+masar_requests.patches.setup_manual_official_duty_reconciliation_v21_4
+
+masar_requests.patches.fix_manual_resolution_select_v21_4_2
+
+masar_requests.patches.change_manual_resolution_to_data_v21_4_3
+
+masar_requests.patches.complete_remaining_requirements_v21_7
+
+masar_requests.patches.fix_leave_layout_visibility_v21_8
+
+masar_requests.patches.fix_leave_partial_option_layout_v21_8_1
+
+masar_requests.patches.apply_strict_request_visibility_v21_9
+
+masar_requests.patches.unify_secretary_access_v22
+
+masar_requests.patches.remove_legacy_material_secretary_role_v22_2
+
+masar_requests.patches.finalize_legacy_material_secretary_removal_v22_3
+
+masar_requests.patches.adopt_existing_secretary_shares_v22_4

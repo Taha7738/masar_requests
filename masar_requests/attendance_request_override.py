@@ -1,4 +1,9 @@
-"""Safe Attendance Request controller overrides for Frappe/HRMS v15.
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `attendance_request_override`.
+EN: Masar application functionality implemented by the `attendance_request_override` module.
+
+DETAILS / التفاصيل:
+Safe Attendance Request controller overrides for Frappe/HRMS v15.
 
 AR:
     يعالج هذا الملف خطأ عرض جدول التحذيرات في بيئة التطوير عندما يرسل HRMS
@@ -21,9 +26,19 @@ from hrms.hr.doctype.attendance_request.attendance_request import (
 
 
 class CustomAttendanceRequest(HRMSAttendanceRequest):
-    """Attendance Request controller with a safe warning-table renderer."""
+    """
+    AR: فئة `CustomAttendanceRequest` لتنظيم منطق الحضور الطلب `override`.
+    EN: Class `CustomAttendanceRequest` that organizes attendance request override logic.
+
+    DETAILS / التفاصيل:
+    Attendance Request controller with a safe warning-table renderer.
+    """
 
     def validate_no_attendance_to_create(self):
+        """
+        AR: تنفيذ التحقق من صحة `no` الحضور `to` إنشاء ضمن وحدة `attendance_request_override`.
+        EN: Execute validate no attendance to create within the `attendance_request_override` module.
+        """
         attendance_warnings = self.get_attendance_warnings()
         attendance_request_days = date_diff(self.to_date, self.from_date) + 1
 
@@ -40,7 +55,13 @@ class CustomAttendanceRequest(HRMSAttendanceRequest):
         )
 
     def _build_no_attendance_message(self, attendance_warnings):
-        """Return an HTML string instead of passing a nested list to msgprint."""
+        """
+        AR: تنفيذ بناء `no` الحضور `message` ضمن وحدة `attendance_request_override`.
+        EN: Execute build no attendance message within the `attendance_request_override` module.
+
+        DETAILS / التفاصيل:
+        Return an HTML string instead of passing a nested list to msgprint.
+        """
         holiday_only = bool(attendance_warnings) and all(
             warning.get("reason") == "Holiday" for warning in attendance_warnings
         )

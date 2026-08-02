@@ -1,4 +1,8 @@
 """
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `apply_leave_layout_and_material_uom` على المواقع القائمة.
+EN: Idempotent migration patch for applying `apply_leave_layout_and_material_uom` changes to existing sites.
+
+DETAILS / التفاصيل:
 AR:
 تطبيق تحديث واجهة طلب الإجازة وإظهار وحدة القياس في جدول طلب المواد
 مرة واحدة على المواقع القائمة عند تنفيذ bench migrate.
@@ -26,16 +30,20 @@ MATERIAL_REQUEST_ITEM_DOCTYPE = "Material Request Item"
 
 def execute():
     """
-    AR:
-    ضمان وجود حقول طلب الإجازة المملوكة للتطبيق، ثم تطبيق ترتيب النموذج
-    وإظهار حقل uom داخل جدول أصناف طلب المواد. لا يتم إنشاء Workflows
-    أو أدوار أو Server Scripts، ولا تتغير صلاحيات rate أو amount.
+    AR: تنفيذ تنفيذ ضمن وحدة `apply_leave_layout_and_material_uom`.
+    EN: Execute execute within the `apply_leave_layout_and_material_uom` module.
 
-    EN:
-    Ensure the app-owned Leave Application fields exist, apply the form
-    layout, and show uom in the Material Request items grid. This patch does
-    not recreate Workflows, roles, or Server Scripts and does not change
-    rate or amount permissions.
+    DETAILS / التفاصيل:
+    AR:
+        ضمان وجود حقول طلب الإجازة المملوكة للتطبيق، ثم تطبيق ترتيب النموذج
+        وإظهار حقل uom داخل جدول أصناف طلب المواد. لا يتم إنشاء Workflows
+        أو أدوار أو Server Scripts، ولا تتغير صلاحيات rate أو amount.
+
+        EN:
+        Ensure the app-owned Leave Application fields exist, apply the form
+        layout, and show uom in the Material Request items grid. This patch does
+        not recreate Workflows, roles, or Server Scripts and does not change
+        rate or amount permissions.
     """
 
     _ensure_leave_application_fields()
@@ -46,8 +54,8 @@ def execute():
 
 def _ensure_leave_application_fields():
     """
-    AR: إنشاء أو تحديث حقول طلب الإجازة التابعة للتطبيق فقط.
-    EN: Create or update only the app-owned Leave Application fields.
+    AR: تنفيذ ضمان الإجازة `application` الحقول ضمن وحدة `apply_leave_layout_and_material_uom`.
+    EN: Execute ensure leave application fields within the `apply_leave_layout_and_material_uom` module.
     """
 
     leave_fields = get_leave_and_shift_custom_fields().get(
@@ -71,13 +79,17 @@ def _ensure_leave_application_fields():
 
 def _show_material_request_item_uom():
     """
-    AR:
-    إظهار وحدة القياس في جدول الطلب فقط، دون لمس منطق أو صلاحيات الكمية
-    أو السعر أو المبلغ.
+    AR: تنفيذ `show` المواد الطلب الصنف `uom` ضمن وحدة `apply_leave_layout_and_material_uom`.
+    EN: Execute show material request item uom within the `apply_leave_layout_and_material_uom` module.
 
-    EN:
-    Show UOM in the request grid only, without touching quantity, rate,
-    or amount logic and permissions.
+    DETAILS / التفاصيل:
+    AR:
+        إظهار وحدة القياس في جدول الطلب فقط، دون لمس منطق أو صلاحيات الكمية
+        أو السعر أو المبلغ.
+
+        EN:
+        Show UOM in the request grid only, without touching quantity, rate,
+        or amount logic and permissions.
     """
 
     meta = frappe.get_meta(MATERIAL_REQUEST_ITEM_DOCTYPE, cached=False)
@@ -105,8 +117,8 @@ def _show_material_request_item_uom():
 
 def _clear_related_caches():
     """
-    AR: تنظيف كاش النماذج المتأثرة بعد تطبيق التحديث.
-    EN: Clear caches for the DocTypes affected by this update.
+    AR: تنفيذ `clear` `related` `caches` ضمن وحدة `apply_leave_layout_and_material_uom`.
+    EN: Execute clear related caches within the `apply_leave_layout_and_material_uom` module.
     """
 
     for doctype in (

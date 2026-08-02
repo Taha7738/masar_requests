@@ -82,3 +82,11 @@ Uninstall removes app-owned workflows, fields, property setters, scripts, and pe
 ## License
 
 MIT
+
+## الإصدار V21 — أوقات وردية متغيرة حسب أيام الأسبوع
+
+يضيف V21 تكاملًا مركزيًا لأوقات `Shift Type` المختلفة حسب اليوم مع `Employee Checkin` و`Auto Attendance` والإجازة الجزئية والمهمة الرسمية، دون تعديل ملفات HRMS الأصلية. راجع:
+
+- `V21_VARIABLE_SHIFT_REPORT_AR.md`
+- `INSTALL_V21.md`
+- `ACCEPTANCE_TESTS_V21_AR.md`

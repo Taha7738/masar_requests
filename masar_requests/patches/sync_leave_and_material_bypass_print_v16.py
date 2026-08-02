@@ -1,3 +1,8 @@
+"""
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `sync_leave_and_material_bypass_print_v16` على المواقع القائمة.
+EN: Idempotent migration patch for applying `sync_leave_and_material_bypass_print_v16` changes to existing sites.
+"""
+
 # ==========================================================================
 # AR: مزامنة ملاحظات تجاوز سير العمل في طباعة الإجازة وطلب المواد — V16
 # EN: Sync workflow-bypass notes for Leave and Material print formats — V16
@@ -29,8 +34,8 @@ PRINT_FORMATS = (
 
 def _definition_path(folder, filename):
     """
-    AR: إرجاع مسار ملف JSON الخاص بتنسيق الطباعة داخل التطبيق.
-    EN: Return the app path for a print-format JSON definition.
+    AR: تنفيذ `definition` `path` ضمن وحدة `sync_leave_and_material_bypass_print_v16`.
+    EN: Execute definition path within the `sync_leave_and_material_bypass_print_v16` module.
     """
     return Path(
         frappe.get_app_path(
@@ -45,8 +50,8 @@ def _definition_path(folder, filename):
 
 def _load_definition(folder, filename):
     """
-    AR: قراءة تعريف تنسيق الطباعة والتحقق من وجود الملف.
-    EN: Load a print-format definition and validate that the file exists.
+    AR: تنفيذ تحميل `definition` ضمن وحدة `sync_leave_and_material_bypass_print_v16`.
+    EN: Execute load definition within the `sync_leave_and_material_bypass_print_v16` module.
     """
     path = _definition_path(folder, filename)
     if not path.exists():
@@ -58,8 +63,8 @@ def _load_definition(folder, filename):
 
 def _database_values(definition, doctype):
     """
-    AR: تجهيز الحقول التي تُحفظ في سجل Print Format بقاعدة البيانات.
-    EN: Build the values stored on the database Print Format record.
+    AR: تنفيذ `database` `values` ضمن وحدة `sync_leave_and_material_bypass_print_v16`.
+    EN: Execute database values within the `sync_leave_and_material_bypass_print_v16` module.
     """
     return {
         "doc_type": doctype,
@@ -81,13 +86,17 @@ def _database_values(definition, doctype):
 
 def _sync_print_format(config):
     """
-    AR:
-        تحديث تنسيق الطباعة الموجود مباشرة من ملف JSON؛ وذلك لمنع استمرار
-        نسخة قديمة داخل قاعدة البيانات بعد استبدال الملفات فقط.
+    AR: تنفيذ مزامنة طباعة تنسيق ضمن وحدة `sync_leave_and_material_bypass_print_v16`.
+    EN: Execute sync print format within the `sync_leave_and_material_bypass_print_v16` module.
 
-    EN:
-        Synchronize the database Print Format directly from JSON so an older
-        database copy cannot remain active after files are replaced.
+    DETAILS / التفاصيل:
+    AR:
+            تحديث تنسيق الطباعة الموجود مباشرة من ملف JSON؛ وذلك لمنع استمرار
+            نسخة قديمة داخل قاعدة البيانات بعد استبدال الملفات فقط.
+
+        EN:
+            Synchronize the database Print Format directly from JSON so an older
+            database copy cannot remain active after files are replaced.
     """
     definition = _load_definition(config["folder"], config["filename"])
     values = _database_values(definition, config["doctype"])
@@ -112,13 +121,17 @@ def _sync_print_format(config):
 
 def execute():
     """
-    AR:
-        تطبيق ملاحظات الاعتماد الإجباري على طباعة الإجازة وطلب المواد فقط.
-        لا يُغيّر هذا الـPatch أي انتقال أو شرط أو صلاحية في سير العمل.
+    AR: تنفيذ تنفيذ ضمن وحدة `sync_leave_and_material_bypass_print_v16`.
+    EN: Execute execute within the `sync_leave_and_material_bypass_print_v16` module.
 
-    EN:
-        Apply forced-approval notes to Leave and Material printing only.
-        This patch does not modify workflow transitions, conditions, or roles.
+    DETAILS / التفاصيل:
+    AR:
+            تطبيق ملاحظات الاعتماد الإجباري على طباعة الإجازة وطلب المواد فقط.
+            لا يُغيّر هذا الـPatch أي انتقال أو شرط أو صلاحية في سير العمل.
+
+        EN:
+            Apply forced-approval notes to Leave and Material printing only.
+            This patch does not modify workflow transitions, conditions, or roles.
     """
     for config in PRINT_FORMATS:
         _sync_print_format(config)

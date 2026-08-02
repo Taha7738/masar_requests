@@ -1,4 +1,9 @@
-"""Shared workflow constants for Masar Requests.
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `constants`.
+EN: Masar application functionality implemented by the `constants` module.
+
+DETAILS / التفاصيل:
+Shared workflow constants for Masar Requests.
 
 AR: مرجع موحد لأسماء حالات وإجراءات سير العمل لمنع اختلاف النصوص بين الملفات.
 EN: A single source of truth for workflow state/action names across the app.

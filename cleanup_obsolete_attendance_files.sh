@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# AR: ينفذ هذا السكربت مهام صيانة التطبيق مع الحفاظ على سلامة الملفات.
+# EN: This script performs application maintenance while preserving file safety.
+
 # AR: حذف ملفات Attendance القديمة التي لم تعد مسجلة في patches.txt.
 # EN: Remove obsolete Attendance files no longer registered in patches.txt.
 set -euo pipefail
@@ -17,10 +20,15 @@ FILES=(
   "masar_requests/patches/fix_attendance_stage_signature_separation_v11.py"
   "masar_requests/patches/fix_attendance_print_approval_cycles_v12.py"
   "masar_requests/public/js/attendance_request_list.js"
+  "masar_requests/public/js/attendance_request.js"
 )
 
 for relative_path in "${FILES[@]}"; do
   rm -f "${APP_ROOT}/${relative_path}"
 done
+
+# AR: إزالة Print Format القياسي القديم بعد نقله إلى Official Duty Request.
+# EN: Remove the old standard Print Format after moving it to Official Duty Request.
+rm -rf "${APP_ROOT}/masar_requests/masar_requests/print_format/masar_attendance_request_form"
 
 echo "Obsolete Attendance files removed from: ${APP_ROOT}"

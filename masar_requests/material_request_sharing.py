@@ -1,3 +1,8 @@
+"""
+AR: تنفيذ وظائف تطبيق مسار ضمن الوحدة `material_request_sharing`.
+EN: Masar application functionality implemented by the `material_request_sharing` module.
+"""
+
 import frappe
 from frappe import share as frappe_share
 
@@ -13,7 +18,13 @@ STATE_ROLE_MAP = MR_STATE_ROLE_MAP
 def get_employee_user(employee):
     # AR: جلب حساب المستخدم المفعّل المرتبط بالموظف.
     # EN: Return the enabled User linked to an Employee.
-    """Return the enabled User linked to an Employee."""
+    """
+    AR: تنفيذ استرجاع الموظف المستخدم ضمن وحدة `material_request_sharing`.
+    EN: Execute get employee user within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
+    Return the enabled User linked to an Employee.
+    """
     if not employee:
         return None
 
@@ -31,7 +42,13 @@ def get_employee_user(employee):
 def get_user_secretary(target_user):
     # AR: جلب حساب السكرتير المفعّل المرتبط بالمستخدم.
     # EN: Return the enabled secretary User linked to a principal.
-    """Return the enabled secretary User linked to a principal User."""
+    """
+    AR: تنفيذ استرجاع المستخدم السكرتير ضمن وحدة `material_request_sharing`.
+    EN: Execute get user secretary within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
+    Return the enabled secretary User linked to a principal User.
+    """
     if not target_user:
         return None
 
@@ -76,7 +93,13 @@ def get_user_secretary(target_user):
 def get_enabled_users_with_role(role):
     # AR: جلب المستخدمين المفعّلين الذين يحملون دورًا محددًا.
     # EN: Return enabled users assigned to a role.
-    """Return enabled users assigned to a role."""
+    """
+    AR: تنفيذ استرجاع `enabled` `users` `with` الدور ضمن وحدة `material_request_sharing`.
+    EN: Execute get enabled users with role within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
+    Return enabled users assigned to a role.
+    """
     users = frappe.get_all(
         "Has Role",
         filters={
@@ -98,7 +121,13 @@ def get_enabled_users_with_role(role):
 def get_all_secretary_users():
     # AR: جلب جميع المستخدمين المسجلين كسكرتارية للموظفين.
     # EN: Return all Users configured as Employee secretaries.
-    """Return all users configured as secretaries in Employee records."""
+    """
+    AR: تنفيذ استرجاع `all` السكرتير `users` ضمن وحدة `material_request_sharing`.
+    EN: Execute get all secretary users within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
+    Return all users configured as secretaries in Employee records.
+    """
     employee_meta = frappe.get_meta("Employee")
 
     if not employee_meta.has_field("custom_secretary_employee"):
@@ -129,6 +158,10 @@ def get_all_secretary_users():
 
 def upsert_share(doc, target_user, can_write=False):
     # AR: إنشاء أو تحديث المشاركة مع تجاوز صارم لقيود المشاركة
+    """
+    AR: تنفيذ `upsert` مشاركة ضمن وحدة `material_request_sharing`.
+    EN: Execute upsert share within the `material_request_sharing` module.
+    """
     if (
         not target_user
         or target_user == "Administrator"
@@ -175,6 +208,10 @@ def upsert_share(doc, target_user, can_write=False):
 
 def remove_share(doc, target_user):
     # AR: حذف مشاركة قديمة مع تجاوز صارم لقيود المشاركة لتجنب انهيار مسار العمل
+    """
+    AR: تنفيذ إزالة مشاركة ضمن وحدة `material_request_sharing`.
+    EN: Execute remove share within the `material_request_sharing` module.
+    """
     if not target_user or target_user == "Administrator":
         return False
 
@@ -199,7 +236,13 @@ def remove_share(doc, target_user):
 def get_current_actor_users(doc):
     # AR: تحديد المستخدمين المسؤولين عن مرحلة طلب المواد الحالية.
     # EN: Resolve users responsible for the current Material Request stage.
-    """Resolve the users responsible for the current workflow stage."""
+    """
+    AR: تنفيذ استرجاع الحالي `actor` `users` ضمن وحدة `material_request_sharing`.
+    EN: Execute get current actor users within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
+    Resolve the users responsible for the current workflow stage.
+    """
     actor_users = set()
 
     if doc.workflow_state == MR_STATE_PENDING_DIRECT_SUPERVISOR:
@@ -222,16 +265,20 @@ def sync_material_request_shares(doc, method=None):
     # AR: مزامنة وصول المسؤول الحالي وسكرتيره إلى طلب المواد.
     # EN: Synchronize current actor and secretary access to a request.
     """
+    AR: تنفيذ مزامنة المواد الطلب `shares` ضمن وحدة `material_request_sharing`.
+    EN: Execute sync material request shares within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
     Synchronize Material Request access with its current workflow stage.
 
-    Current actor:
-        read + write
+        Current actor:
+            read + write
 
-    Current actor's secretary:
-        read + print only
+        Current actor's secretary:
+            read + print only
 
-    A secretary's share is removed when their principal is no longer
-    responsible for the current workflow stage.
+        A secretary's share is removed when their principal is no longer
+        responsible for the current workflow stage.
     """
     if not doc or doc.doctype != "Material Request" or not doc.name:
         return
@@ -284,7 +331,13 @@ def sync_material_request_shares(doc, method=None):
 def resync_all_material_request_shares():
     # AR: إعادة مزامنة مشاركات جميع طلبات المواد.
     # EN: Re-synchronize shares for every Material Request.
-    """Apply the current sharing rules to all existing requests."""
+    """
+    AR: تنفيذ `resync` `all` المواد الطلب `shares` ضمن وحدة `material_request_sharing`.
+    EN: Execute resync all material request shares within the `material_request_sharing` module.
+
+    DETAILS / التفاصيل:
+    Apply the current sharing rules to all existing requests.
+    """
     request_names = frappe.get_all(
         "Material Request",
         pluck="name",
@@ -307,3 +360,24 @@ def resync_all_material_request_shares():
     return {
         "processed_requests": len(request_names),
     }
+
+
+# MASAR_DISABLE_LEGACY_MR_SECRETARY_SHARING_V22_2
+# Keep the original workflow-actor sharing function intact, but make its
+# secretary discovery return nothing. The unified secretary_access.py service
+# is now the only code allowed to create or revoke secretary access.
+
+def get_user_secretary(target_user):
+    """
+    AR: تنفيذ استرجاع المستخدم السكرتير ضمن وحدة `material_request_sharing`.
+    EN: Execute get user secretary within the `material_request_sharing` module.
+    """
+    return None
+
+
+def get_all_secretary_users():
+    """
+    AR: تنفيذ استرجاع `all` السكرتير `users` ضمن وحدة `material_request_sharing`.
+    EN: Execute get all secretary users within the `material_request_sharing` module.
+    """
+    return set()

@@ -1,3 +1,8 @@
+"""
+AR: إعداد وتهيئة مكونات التطبيق ضمن الوحدة `setup_material_request`.
+EN: Application setup and configuration routines for the `setup_material_request` module.
+"""
+
 # =======================================================================
 # 🚀 إعدادات مسار طلب المواد - نظام مسار
 # 🚀 Material Request Setup - masar_requests System
@@ -69,15 +74,19 @@ MATERIAL_REQUEST_PROPERTY_SETTERS = {
 
 
 def setup_material_request_all():
-    '''
-    AR:
-        الدالة الرئيسية لإعداد طلب المواد مع المحافظة على منطق سير العمل
-        الأصلي، وتطبيق إصلاحات الوصول والمشاركة على الطلبات الحالية.
+    """
+    AR: تنفيذ إعداد المواد الطلب `all` ضمن وحدة `setup_material_request`.
+    EN: Execute setup material request all within the `setup_material_request` module.
 
-    EN:
-        Main Material Request setup. Preserves the original workflow logic
-        and applies access/share fixes to existing requests.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            الدالة الرئيسية لإعداد طلب المواد مع المحافظة على منطق سير العمل
+            الأصلي، وتطبيق إصلاحات الوصول والمشاركة على الطلبات الحالية.
+
+        EN:
+            Main Material Request setup. Preserves the original workflow logic
+            and applies access/share fixes to existing requests.
+    """
     print("🚀 " + frappe._("Setting up Material Requests..."))
 
     create_material_workflow_prerequisites()
@@ -109,10 +118,15 @@ def setup_material_request_all():
 
 
 def teardown_material_request():
-    """Remove app-owned Material Request configuration without deleting requests.
+    """
+    AR: تنفيذ `teardown` المواد الطلب ضمن وحدة `setup_material_request`.
+    EN: Execute teardown material request within the `setup_material_request` module.
 
-    AR: يحذف إعدادات التطبيق فقط ويحافظ على مستندات طلب المواد وبياناتها.
-    EN: Remove app-owned configuration while preserving Material Request documents.
+    DETAILS / التفاصيل:
+    Remove app-owned Material Request configuration without deleting requests.
+
+        AR: يحذف إعدادات التطبيق فقط ويحافظ على مستندات طلب المواد وبياناتها.
+        EN: Remove app-owned configuration while preserving Material Request documents.
     """
     for doctype, fieldnames in MATERIAL_REQUEST_CUSTOM_FIELDS.items():
         for fieldname in fieldnames:
@@ -218,8 +232,8 @@ def teardown_material_request():
 
 def create_material_workflow_prerequisites():
     """
-    AR: إنشاء الأدوار، الحالات، والإجراءات المطلوبة لسير العمل
-    EN: Create roles, states, and actions required for the workflow
+    AR: تنفيذ إنشاء المواد سير العمل `prerequisites` ضمن وحدة `setup_material_request`.
+    EN: Execute create material workflow prerequisites within the `setup_material_request` module.
     """
     # AR:
     # لا يتم إنشاء دور Direct Supervisor. المسؤول المباشر يُحدَّد حصراً من
@@ -260,15 +274,19 @@ def create_material_workflow_prerequisites():
 
 
 def remove_legacy_direct_supervisor_role():
-    '''
-    AR:
-        إزالة دور Direct Supervisor القديم بعد تحديث سير العمل، مع حذف
-        إسنادات المستخدمين والصلاحيات وإجراءات Workflow القديمة المرتبطة به.
+    """
+    AR: تنفيذ إزالة القديم `direct` المشرف الدور ضمن وحدة `setup_material_request`.
+    EN: Execute remove legacy direct supervisor role within the `setup_material_request` module.
 
-    EN:
-        Remove the legacy Direct Supervisor role after updating the workflow,
-        including user assignments, permissions, and stale workflow actions.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            إزالة دور Direct Supervisor القديم بعد تحديث سير العمل، مع حذف
+            إسنادات المستخدمين والصلاحيات وإجراءات Workflow القديمة المرتبطة به.
+
+        EN:
+            Remove the legacy Direct Supervisor role after updating the workflow,
+            including user assignments, permissions, and stale workflow actions.
+    """
     role_name = "Direct Supervisor"
 
     # AR: إزالة السجلات القديمة التي تربط المستخدمين والصلاحيات بالدور.
@@ -310,15 +328,19 @@ def remove_legacy_direct_supervisor_role():
 
 
 def create_material_request_custom_fields():
-    '''
-    AR:
-        إنشاء الحقول المخصصة المطلوبة لطلب المواد مع منع حقول
-        المسؤول والسكرتير التقنية من تفعيل قيود User Permission.
+    """
+    AR: تنفيذ إنشاء المواد الطلب `custom` الحقول ضمن وحدة `setup_material_request`.
+    EN: Execute create material request custom fields within the `setup_material_request` module.
 
-    EN:
-        Create Material Request custom fields while preventing the
-        technical manager/secretary links from triggering User Permissions.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            إنشاء الحقول المخصصة المطلوبة لطلب المواد مع منع حقول
+            المسؤول والسكرتير التقنية من تفعيل قيود User Permission.
+
+        EN:
+            Create Material Request custom fields while preventing the
+            technical manager/secretary links from triggering User Permissions.
+    """
     old_fields = [
         "custom_direct_manager_user",
         "custom_secretary_user",
@@ -461,17 +483,21 @@ def create_material_request_custom_fields():
 
 
 def modify_material_request_properties():
-    '''
-    AR:
-        تعديل خصائص واجهة طلب المواد مع إبقاء منطق الكمية الحالي:
-        الموظف يحدد الكمية المطلوبة، وأمين المخزن يستطيع تعديل qty
-        فقط خلال مرحلة Pending Stock Check.
+    """
+    AR: تنفيذ `modify` المواد الطلب `properties` ضمن وحدة `setup_material_request`.
+    EN: Execute modify material request properties within the `setup_material_request` module.
 
-    EN:
-        Configure Material Request UI properties while preserving the
-        quantity logic: the employee requests a quantity and the Warehouse
-        Manager may adjust qty only during Pending Stock Check.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            تعديل خصائص واجهة طلب المواد مع إبقاء منطق الكمية الحالي:
+            الموظف يحدد الكمية المطلوبة، وأمين المخزن يستطيع تعديل qty
+            فقط خلال مرحلة Pending Stock Check.
+
+        EN:
+            Configure Material Request UI properties while preserving the
+            quantity logic: the employee requests a quantity and the Warehouse
+            Manager may adjust qty only during Pending Stock Check.
+    """
     make_property_setter(
         "Material Request",
         "naming_series",
@@ -583,14 +609,14 @@ def modify_material_request_properties():
     )
     make_property_setter(
         "Material Request Item", "uom", "in_list_view", 1, "Check"
-    )    
+    )
     make_property_setter(
         "Material Request Item", "rate", "columns", "1", "Int"
     )
     make_property_setter(
         "Material Request Item", "amount", "columns", "1", "Int"
     )
-    
+
 
     # AR:
     # qty قابل للتعديل في ثلاث حالات فقط:
@@ -638,18 +664,22 @@ def modify_material_request_properties():
         "Data",
     )
 
-    
+
 
 def grant_employee_base_permissions():
-    '''
-    AR:
-        مزامنة صلاحيات الأدوار التي يديرها تطبيق masar_requests فقط، دون حذف
-        صلاحيات أدوار أخرى أضافها النظام أو تطبيقات أخرى.
+    """
+    AR: تنفيذ منح الموظف `base` الصلاحيات ضمن وحدة `setup_material_request`.
+    EN: Execute grant employee base permissions within the `setup_material_request` module.
 
-    EN:
-        Synchronize only the Material Request roles managed by Masar Requests,
-        without deleting permissions owned by other apps or administrators.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            مزامنة صلاحيات الأدوار التي يديرها تطبيق masar_requests فقط، دون حذف
+            صلاحيات أدوار أخرى أضافها النظام أو تطبيقات أخرى.
+
+        EN:
+            Synchronize only the Material Request roles managed by Masar Requests,
+            without deleting permissions owned by other apps or administrators.
+    """
     doctype_name = "Material Request"
 
     managed_roles = [
@@ -687,6 +717,10 @@ def grant_employee_base_permissions():
     def add_permission(role, **permissions):
         # AR: إنشاء صلاحية DocPerm لدور محدد على طلب المواد.
         # EN: Create a DocPerm for a Material Request role.
+        """
+        AR: تنفيذ إضافة صلاحية ضمن وحدة `setup_material_request`.
+        EN: Execute add permission within the `setup_material_request` module.
+        """
         if role != "Administrator" and not frappe.db.exists("Role", role):
             frappe.get_doc(
                 {
@@ -780,10 +814,14 @@ def create_sharing_server_script():
     # AR: إزالة سكربت المشاركة القديم بعد نقله إلى Python.
     # EN: Remove the obsolete sharing Server Script after native migration.
     """
+    AR: تنفيذ إنشاء `sharing` `server` `script` ضمن وحدة `setup_material_request`.
+    EN: Execute create sharing server script within the `setup_material_request` module.
+
+    DETAILS / التفاصيل:
     Remove the obsolete safe-exec Server Script.
 
-    Material Request sharing is now implemented as a native Python
-    doc_events hook in material_request_sharing.py.
+        Material Request sharing is now implemented as a native Python
+        doc_events hook in material_request_sharing.py.
     """
     script_name = "Auto Share MR with Direct Supervisor masar_requests"
 
@@ -800,10 +838,15 @@ def create_sharing_server_script():
 # EN: The obsolete disabled fission-engine version was removed to avoid confusion.
 
 def remove_legacy_fission_server_script():
-    """Remove the obsolete text Server Script after migration to native Python.
+    """
+    AR: تنفيذ إزالة القديم `fission` `server` `script` ضمن وحدة `setup_material_request`.
+    EN: Execute remove legacy fission server script within the `setup_material_request` module.
 
-    AR: منطق الحماية والإشعارات والانشطار موجود في material_request_engine.py.
-    EN: Protection, notifications, and splitting now live in material_request_engine.py.
+    DETAILS / التفاصيل:
+    Remove the obsolete text Server Script after migration to native Python.
+
+        AR: منطق الحماية والإشعارات والانشطار موجود في material_request_engine.py.
+        EN: Protection, notifications, and splitting now live in material_request_engine.py.
     """
     script_name = "Warehouse Fission Engine masar_requests"
     if frappe.db.exists("Server Script", script_name):
@@ -816,15 +859,19 @@ def remove_legacy_fission_server_script():
 
 
 def create_material_request_workflow():
-    '''
-    AR:
-        إعادة بناء سير العمل بنفس المراحل والمنطق الأصلي، مع تقييد
-        اعتماد ورفض مرحلة المسؤول المباشر بالمستخدم المحدد في reports_to.
+    """
+    AR: تنفيذ إنشاء المواد الطلب سير العمل ضمن وحدة `setup_material_request`.
+    EN: Execute create material request workflow within the `setup_material_request` module.
 
-    EN:
-        Rebuild the workflow with the original stages and routing, while
-        restricting direct-supervisor actions to the user linked in reports_to.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            إعادة بناء سير العمل بنفس المراحل والمنطق الأصلي، مع تقييد
+            اعتماد ورفض مرحلة المسؤول المباشر بالمستخدم المحدد في reports_to.
+
+        EN:
+            Rebuild the workflow with the original stages and routing, while
+            restricting direct-supervisor actions to the user linked in reports_to.
+    """
     workflow_name = "Material Request Approval masar_requests"
 
     if frappe.db.exists("Workflow", workflow_name):
@@ -1063,16 +1110,20 @@ def create_material_request_workflow():
 
 
 def setup_university_secretary_role():
-    '''
-    AR:
-        تثبيت دور سكرتير طلب المواد بصلاحية قراءة وطباعة فقط.
-        لا تمنحه هذه الدالة وصولاً عاماً؛ المستندات المحددة تصل إليه
-        بواسطة DocShare من سكربت المشاركة.
+    """
+    AR: تنفيذ إعداد `university` السكرتير الدور ضمن وحدة `setup_material_request`.
+    EN: Execute setup university secretary role within the `setup_material_request` module.
 
-    EN:
-        Configure Material Request Secretary as read/print-only.
-        Specific documents are granted through DocShare, not broad access.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            تثبيت دور سكرتير طلب المواد بصلاحية قراءة وطباعة فقط.
+            لا تمنحه هذه الدالة وصولاً عاماً؛ المستندات المحددة تصل إليه
+            بواسطة DocShare من سكربت المشاركة.
+
+        EN:
+            Configure Material Request Secretary as read/print-only.
+            Specific documents are granted through DocShare, not broad access.
+    """
     doctype_name = "Material Request"
     role_name = "Material Request Secretary"
 
@@ -1138,8 +1189,8 @@ def setup_university_secretary_role():
 
 def sync_material_request_secretary_roles(role_name="Material Request Secretary"):
     """
-    AR: إضافة دور Material Request Secretary لسجلات السكرتارية المفعلة.
-    EN: Add Material Request Secretary to enabled secretary User accounts.
+    AR: تنفيذ مزامنة المواد الطلب السكرتير `roles` ضمن وحدة `setup_material_request`.
+    EN: Execute sync material request secretary roles within the `setup_material_request` module.
     """
     employee_meta = frappe.get_meta("Employee")
     if not employee_meta.has_field("custom_secretary_employee"):
@@ -1178,6 +1229,10 @@ def resync_all_material_request_shares():
     # AR: إعادة مزامنة مشاركات جميع طلبات المواد.
     # EN: Re-synchronize shares for every Material Request.
     """
+    AR: تنفيذ `resync` `all` المواد الطلب `shares` ضمن وحدة `setup_material_request`.
+    EN: Execute resync all material request shares within the `setup_material_request` module.
+
+    DETAILS / التفاصيل:
     Re-sync all Material Request shares using the native app hook logic.
     """
     from masar_requests.material_request_sharing import (
@@ -1189,15 +1244,19 @@ def resync_all_material_request_shares():
 
 
 def audit_material_request_access(docname):
-    '''
-    AR:
-        فحص وصول جميع مستخدمي أدوار سير طلب المواد إلى مستند محدد.
-        الدالة للقراءة والتشخيص فقط ولا تعدل البيانات.
+    """
+    AR: تنفيذ تدقيق المواد الطلب الوصول ضمن وحدة `setup_material_request`.
+    EN: Execute audit material request access within the `setup_material_request` module.
 
-    EN:
-        Audit all Material Request workflow-role users against one document.
-        Read-only diagnostic function; it does not modify data.
-    '''
+    DETAILS / التفاصيل:
+    AR:
+            فحص وصول جميع مستخدمي أدوار سير طلب المواد إلى مستند محدد.
+            الدالة للقراءة والتشخيص فقط ولا تعدل البيانات.
+
+        EN:
+            Audit all Material Request workflow-role users against one document.
+            Read-only diagnostic function; it does not modify data.
+    """
     from frappe.model.workflow import get_transitions
 
     if not frappe.db.exists("Material Request", docname):
@@ -1342,3 +1401,52 @@ def audit_material_request_access(docname):
         frappe.set_user(original_user)
 
     return results
+
+
+# MASAR_DISABLE_LEGACY_MR_SECRETARY_ROLE_V22_2
+# Secretary access is now provided exclusively by secretary_access.py through
+# document-specific tracking, permission hooks, DocShare, ToDo, and alerts.
+# The old broad helper role must never be assigned or recreated.
+
+def setup_university_secretary_role():
+    """
+    AR: تنفيذ إعداد `university` السكرتير الدور ضمن وحدة `setup_material_request`.
+    EN: Execute setup university secretary role within the `setup_material_request` module.
+    """
+    role_name = "Material Request Secretary"
+
+    frappe.db.delete(
+        "Custom DocPerm",
+        {
+            "parent": "Material Request",
+            "role": role_name,
+        },
+    )
+    frappe.db.delete("Has Role", {"role": role_name})
+
+    if frappe.db.exists("Role", role_name):
+        role_meta = frappe.get_meta("Role", cached=False)
+        if role_meta.has_field("disabled"):
+            frappe.db.set_value(
+                "Role",
+                role_name,
+                "disabled",
+                1,
+                update_modified=False,
+            )
+
+    frappe.clear_cache(doctype="Material Request")
+    return 0
+
+
+def sync_material_request_secretary_roles(
+    role_name="Material Request Secretary",
+):
+    # Kept only for backward-compatible imports from install.py.
+    # It intentionally assigns no role.
+    """
+    AR: تنفيذ مزامنة المواد الطلب السكرتير `roles` ضمن وحدة `setup_material_request`.
+    EN: Execute sync material request secretary roles within the `setup_material_request` module.
+    """
+    setup_university_secretary_role()
+    return 0

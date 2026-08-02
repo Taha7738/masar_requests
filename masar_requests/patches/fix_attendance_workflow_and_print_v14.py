@@ -1,3 +1,8 @@
+"""
+AR: تصحيح ترحيل آمن لتطبيق تغييرات `fix_attendance_workflow_and_print_v14` على المواقع القائمة.
+EN: Idempotent migration patch for applying `fix_attendance_workflow_and_print_v14` changes to existing sites.
+"""
+
 # ============================================================================
 # AR: إصلاح حاسم لمسار رفض البديل واعتماد المدير/الموارد والطباعة — V14
 # EN: Definitive substitute-rejection, manager/HR approval, and print fix — V14
@@ -36,8 +41,8 @@ ACTIVE_STATES = {
 
 def _workflow_change(data):
     """
-    AR: استخراج انتقال workflow_state من سجل Version.
-    EN: Extract the workflow_state transition from a Version record.
+    AR: تنفيذ سير العمل `change` ضمن وحدة `fix_attendance_workflow_and_print_v14`.
+    EN: Execute workflow change within the `fix_attendance_workflow_and_print_v14` module.
     """
     if not data:
         return None
@@ -63,8 +68,8 @@ def _workflow_change(data):
 
 def _workflow_history(docname):
     """
-    AR: إعادة انتقالات سير العمل بالترتيب الزمني.
-    EN: Return workflow transitions in chronological order.
+    AR: تنفيذ سير العمل `history` ضمن وحدة `fix_attendance_workflow_and_print_v14`.
+    EN: Execute workflow history within the `fix_attendance_workflow_and_print_v14` module.
     """
     versions = frappe.get_all(
         "Version",
@@ -90,15 +95,19 @@ def _workflow_history(docname):
 
 def _repair_rejected_substitute_request(row, history):
     """
-    AR:
-        تصحيح الطلبات التي رفضها البديل تحت Workflow قديم فتحولت خطأً إلى Rejected.
-        تعاد إلى Draft، ويُحذف البديل المرفوض ليختار الموظف بديلاً جديداً أو يرسل
-        مباشرة إلى المسؤول المباشر.
+    AR: تنفيذ `repair` `rejected` `substitute` الطلب ضمن وحدة `fix_attendance_workflow_and_print_v14`.
+    EN: Execute repair rejected substitute request within the `fix_attendance_workflow_and_print_v14` module.
 
-    EN:
-        Repair requests rejected by a substitute under a stale workflow. Return them
-        to Draft and clear the rejected substitute so the applicant can reselect or
-        send directly to the manager.
+    DETAILS / التفاصيل:
+    AR:
+            تصحيح الطلبات التي رفضها البديل تحت Workflow قديم فتحولت خطأً إلى Rejected.
+            تعاد إلى Draft، ويُحذف البديل المرفوض ليختار الموظف بديلاً جديداً أو يرسل
+            مباشرة إلى المسؤول المباشر.
+
+        EN:
+            Repair requests rejected by a substitute under a stale workflow. Return them
+            to Draft and clear the rejected substitute so the applicant can reselect or
+            send directly to the manager.
     """
     if row.workflow_state != ATTENDANCE_STATE_REJECTED:
         return False
@@ -153,15 +162,19 @@ def _repair_rejected_substitute_request(row, history):
 
 def _rebuild_approval_audit(row, history):
     """
-    AR:
-        إعادة بناء حقول توقيع البديل والمدير والاعتماد النهائي من التاريخ الحقيقي.
-        أي مرحلة تم تجاوزها بواسطة صاحب الاعتماد النهائي تُسجل Bypassed، حتى يعرض
-        تنسيق الطباعة عبارة «تم الاعتماد من قبل» بدلاً من اسم غير صحيح أو خانة فارغة.
+    AR: تنفيذ `rebuild` `approval` تدقيق ضمن وحدة `fix_attendance_workflow_and_print_v14`.
+    EN: Execute rebuild approval audit within the `fix_attendance_workflow_and_print_v14` module.
 
-    EN:
-        Rebuild substitute, manager, and final-approver audit fields from actual
-        workflow history. Stages skipped by the final approver are marked Bypassed
-        so printing shows “Approved by” instead of an incorrect name or blank cell.
+    DETAILS / التفاصيل:
+    AR:
+            إعادة بناء حقول توقيع البديل والمدير والاعتماد النهائي من التاريخ الحقيقي.
+            أي مرحلة تم تجاوزها بواسطة صاحب الاعتماد النهائي تُسجل Bypassed، حتى يعرض
+            تنسيق الطباعة عبارة «تم الاعتماد من قبل» بدلاً من اسم غير صحيح أو خانة فارغة.
+
+        EN:
+            Rebuild substitute, manager, and final-approver audit fields from actual
+            workflow history. Stages skipped by the final approver are marked Bypassed
+            so printing shows “Approved by” instead of an incorrect name or blank cell.
     """
     has_substitute = bool(row.custom_substitute_employee or row.custom_substitute_user)
 
@@ -288,8 +301,8 @@ def _rebuild_approval_audit(row, history):
 
 def _repair_existing_requests():
     """
-    AR: إصلاح الحالات الحالية وحقول الطباعة لكل الطلبات الموجودة.
-    EN: Repair current states and print audit fields for all existing requests.
+    AR: تنفيذ `repair` الموجود `requests` ضمن وحدة `fix_attendance_workflow_and_print_v14`.
+    EN: Execute repair existing requests within the `fix_attendance_workflow_and_print_v14` module.
     """
     if not frappe.db.exists("DocType", ATTENDANCE_DOCTYPE):
         return {"returned_to_draft": 0, "audit_rebuilt": 0}
@@ -348,19 +361,23 @@ def _repair_existing_requests():
 
 def execute():
     """
-    AR:
-        1) إعادة بناء Workflow طلب المهمة باسم جديد في Patch Log لضمان التنفيذ.
-        2) تفعيل اعتماد المدير أثناء انتظار البديل واعتماد HR النهائي من أي مرحلة.
-        3) إعادة طلبات رفض البديل إلى الموظف بدلاً من الحالة مرفوضة.
-        4) إصلاح حقول التوقيع المستخدمة في تنسيق الطباعة.
-        5) إعادة مزامنة المشاركات ليصل الطلب فوراً للمدير.
+    AR: تنفيذ تنفيذ ضمن وحدة `fix_attendance_workflow_and_print_v14`.
+    EN: Execute execute within the `fix_attendance_workflow_and_print_v14` module.
 
-    EN:
-        1) Rebuild the Official Duty workflow through a new Patch Log entry.
-        2) Enable manager approval during substitute waiting and HR final approval from any stage.
-        3) Return substitute-rejected requests to the applicant instead of final Rejected.
-        4) Repair print-signature audit fields.
-        5) Re-sync shares so the manager receives the request immediately.
+    DETAILS / التفاصيل:
+    AR:
+            1) إعادة بناء Workflow طلب المهمة باسم جديد في Patch Log لضمان التنفيذ.
+            2) تفعيل اعتماد المدير أثناء انتظار البديل واعتماد HR النهائي من أي مرحلة.
+            3) إعادة طلبات رفض البديل إلى الموظف بدلاً من الحالة مرفوضة.
+            4) إصلاح حقول التوقيع المستخدمة في تنسيق الطباعة.
+            5) إعادة مزامنة المشاركات ليصل الطلب فوراً للمدير.
+
+        EN:
+            1) Rebuild the Official Duty workflow through a new Patch Log entry.
+            2) Enable manager approval during substitute waiting and HR final approval from any stage.
+            3) Return substitute-rejected requests to the applicant instead of final Rejected.
+            4) Repair print-signature audit fields.
+            5) Re-sync shares so the manager receives the request immediately.
     """
     setup_attendance_request_all()
     result = _repair_existing_requests()

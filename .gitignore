@@ -9,3 +9,11 @@ __pycache__
 *.before_module_fix
 .coverage
 htmlcov/
+
+# AR: ملفات مؤقتة للتدقيق والإصلاح لا تدخل في الإصدار النهائي.
+# EN: Temporary audit and repair files are excluded from releases.
+*.backup_*
+*.bak
+_audit_*.py
+_fix_*.py
+_find_*.py
